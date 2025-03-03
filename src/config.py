@@ -15,6 +15,8 @@ class AuthApiPrefix(BaseModel):
     prefix: str = '/auth'
     register: str = '/register'
     refresh: str = '/refresh'
+    login: str = '/login'
+    logout: str = '/logout'
 
 
 class ApiV1Prefix(BaseModel):
@@ -40,13 +42,17 @@ class DatabaseConfig(BaseModel):
     }
 
 
+class RedisConfig(BaseModel):
+    host: str
+    port: int
+    password: str
+
+
 class AuthConfig(BaseModel):
     secret_key: str
     token_url: str = '/api/v1/auth/login'
     lifetime_seconds_access: int = 3600
     lifetime_seconds_refresh: int = 86400
-    auth_by_email_chars_count: int = 6
-    lifetime_seconds_code: int = 300
 
 
 class FrontendConfig(BaseModel):
@@ -62,6 +68,7 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
     db: DatabaseConfig
+    redis: RedisConfig
     auth: AuthConfig
     front: FrontendConfig
 

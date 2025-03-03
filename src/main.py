@@ -7,13 +7,13 @@ from storage import my_storage
 from database import engine
 from sqladmin import Admin
 from admin import UserAdmin, MaterialAdmin, TopicBlockAdmin, FeedbackAdmin, LearningClassAdmin, StudentClassAdmin
-# from api import router
+from router import router
 from uuid import uuid4
 
 
 app = FastAPI()
 
-app.mount("/files", StaticFiles(directory="../files"), name="files")
+app.mount('/files', StaticFiles(directory='../files'), name='files')
 
 
 @app.post('/upload/')
@@ -53,7 +53,7 @@ app.add_middleware(
                    'Authorization'],
 )
 
-# app.include_router(router)
+app.include_router(router)
 
 if __name__ == '__main__':
     import uvicorn
