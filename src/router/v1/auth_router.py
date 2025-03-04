@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from services.auth_service import AuthService
 from typing import Annotated
-from schemas import UserRegister, TokenResponse, RefreshTokenRequest
+from schemas import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config import settings
 from dependecies import get_auth_service, get_current_user
+from exception import NoRightsException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
 
@@ -40,7 +41,7 @@ async def login(
 async def get_login_status(
         payload: Annotated[dict, Depends(get_current_user)]
 ):
-    """Проверка статуса авторизации (требуется передача JWT в заголовке)."""
+    """Проверка статуса авторизации."""
     return {'message': 'Вы авторизованы', 'email': payload['sub'], 'role': payload['role']}
 
 
@@ -68,3 +69,17 @@ async def logout(
     """Выход из системы (добавление токена в blacklist)."""
     await auth_service.invalidate_token(token)
     return {'message': 'Вы успешно вышли из системы'}
+
+
+@router.patch(settings.api.v1.auth.change_password)
+async def change_password(
+        data: ChangePasswordRequest,
+        payload: Annotated[dict, Depends(get_current_user)],
+        auth_service: Annotated[AuthService, Depends(get_auth_service)]
+):
+    """Смена пароля"""
+    try:
+        await auth_service.change_password(payload['sub'], payload['role'], data.new_password)
+        return {'message': 'Пароль успешно изменён.'}
+    except NoRightsException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))

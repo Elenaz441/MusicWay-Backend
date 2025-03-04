@@ -7,6 +7,7 @@ from repositories import UserRepository, RoleRepository
 from schemas import UserRegister
 from models import User
 from config import settings
+from exception import NoRightsException
 
 
 class AuthService:
@@ -66,7 +67,10 @@ class AuthService:
             raise ValueError('Неверный email или пароль')
 
         role = await self.role_repo.get_role_by_id(str(user.role_id))
-        payload = {'sub': user.email, 'role': role.name}
+        payload = {'sub': user.email, 'role': role.name, 'is_first_login': user.is_first_login}
+
+        if user.is_first_login:
+            await self.user_repo.change_user_is_first_login(user)
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
@@ -86,6 +90,14 @@ class AuthService:
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
         return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'Bearer'}
+
+    async def change_password(self, email: str, role_name: str, new_password: str):
+        """Смена пароля преподавателя при первой авторизации"""
+        if role_name != 'Преподаватель':
+            raise NoRightsException('Нет доступа')
+        user = await self.user_repo.get_user_by_email(email)
+        hashed_password = self.hash_password(new_password)
+        await self.user_repo.change_user_password(user, hashed_password)
 
     async def decode_jwt(self, token: str):
         """Декодирует JWT, проверяет срок действия и наличие в blacklist."""

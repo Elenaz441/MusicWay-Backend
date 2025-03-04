@@ -1,7 +1,8 @@
 __all__ = [
     'UserRegister',
     'TokenResponse',
-    'RefreshTokenRequest'
+    'RefreshTokenRequest',
+    'ChangePasswordRequest'
 ]
 
-from .auth import UserRegister, TokenResponse, RefreshTokenRequest
+from .auth import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest

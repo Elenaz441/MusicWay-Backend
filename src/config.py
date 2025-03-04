@@ -17,6 +17,7 @@ class AuthApiPrefix(BaseModel):
     refresh: str = '/refresh'
     login: str = '/login'
     logout: str = '/logout'
+    change_password: str = '/change-password'
 
 
 class ApiV1Prefix(BaseModel):
