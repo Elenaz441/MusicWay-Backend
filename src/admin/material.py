@@ -6,12 +6,12 @@ from models import StudyMaterial
 class MaterialAdmin(ModelView, model=StudyMaterial):
     name = 'Учебный материал'
     name_plural = 'Учебные материалы'
-    column_list = [StudyMaterial.name, StudyMaterial.topic]
-    column_details_list = [StudyMaterial.name, StudyMaterial.topic, StudyMaterial.video_url, StudyMaterial.text]
-    form_columns = [StudyMaterial.name, StudyMaterial.topic, StudyMaterial.video_url, StudyMaterial.text]
+    column_list = [StudyMaterial.name, StudyMaterial.block]
+    column_details_list = [StudyMaterial.name, StudyMaterial.block, StudyMaterial.video_url, StudyMaterial.text]
+    form_columns = [StudyMaterial.name, StudyMaterial.block, StudyMaterial.video_url, StudyMaterial.text]
     column_labels = {
         StudyMaterial.name: 'Наименование',
-        StudyMaterial.topic: 'Раздел',
+        StudyMaterial.block: 'Раздел',
         StudyMaterial.video_url: 'Ссылка на видео',
         StudyMaterial.text: 'Текст'
     }

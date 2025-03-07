@@ -4,10 +4,10 @@ import jwt
 from datetime import datetime, timedelta, timezone
 
 from repositories import UserRepository, RoleRepository
-from schemas import UserRegister
+from schemas import UserRegister, TokenResponse
 from models import User
 from config import settings
-from exception import NoRightsException
+from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException, InvalidTokenException
 
 
 class AuthService:
@@ -29,11 +29,11 @@ class AuthService:
         """Генерация JWT-токена."""
         to_encode = data.copy()
         to_encode.update({'exp': datetime.now(timezone.utc) + expires_delta})
-        return jwt.encode(to_encode, settings.auth.secret_key, algorithm='HS256')
+        return jwt.encode(to_encode, settings.auth.secret_key, algorithm=settings.auth.algorithm)
 
     async def invalidate_token(self, token: str):
         """Добавление токена в Redis Blacklist."""
-        exp = jwt.decode(token, settings.auth.secret_key, algorithms=['HS256'])['exp']
+        exp = jwt.decode(token, settings.auth.secret_key, algorithms=[settings.auth.algorithm])['exp']
         ttl = exp - int(datetime.now(timezone.utc).timestamp())
         if ttl > 0:
             await self.redis.setex(f'blacklist:{token}', ttl, 'true')
@@ -46,7 +46,7 @@ class AuthService:
         """Регистрация нового пользователя."""
         existing_user = await self.user_repo.get_user_by_email(user_data.email)
         if existing_user:
-            raise ValueError('Пользователь с таким email уже существует')
+            raise AlreadyExistsException('пользователь', 'email')
 
         hashed_password = self.hash_password(user_data.password)
         role = await self.role_repo.get_role_by_name(user_data.role)
@@ -60,11 +60,11 @@ class AuthService:
             role_id=role.id)
         return await self.user_repo.create_user(new_user)
 
-    async def login_user(self, email: str, password: str):
+    async def login_user(self, email: str, password: str) -> TokenResponse:
         """Авторизация пользователя."""
         user = await self.user_repo.get_user_by_email(email)
         if not user or not self.verify_password(password, user.hashed_password):
-            raise ValueError('Неверный email или пароль')
+            raise IncorrectDataException('Неверный email или пароль')
 
         role = await self.role_repo.get_role_by_id(str(user.role_id))
         payload = {'sub': user.email, 'role': role.name, 'is_first_login': user.is_first_login}
@@ -75,26 +75,26 @@ class AuthService:
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
 
-        return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'Bearer'}
+        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
-    async def refresh_token(self, refresh_token: str):
+    async def refresh_token(self, refresh_token: str) -> TokenResponse:
         """Обновление Access-токена."""
         if await self.is_token_blacklisted(refresh_token):
-            raise ValueError('Токен недействителен')
+            raise IncorrectDataException('Токен недействителен')
 
         try:
-            payload = jwt.decode(refresh_token, settings.auth.secret_key, algorithms=['HS256'])
+            payload = jwt.decode(refresh_token, settings.auth.secret_key, algorithms=[settings.auth.algorithm])
         except jwt.ExpiredSignatureError:
-            raise ValueError('Refresh-токен истек')
+            raise IncorrectDataException('Refresh-токен истек')
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
-        return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'Bearer'}
+        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
     async def change_password(self, email: str, role_name: str, new_password: str):
         """Смена пароля преподавателя при первой авторизации"""
         if role_name != 'Преподаватель':
-            raise NoRightsException('Нет доступа')
+            raise NoRightsException()
         user = await self.user_repo.get_user_by_email(email)
         hashed_password = self.hash_password(new_password)
         await self.user_repo.change_user_password(user, hashed_password)
@@ -102,11 +102,11 @@ class AuthService:
     async def decode_jwt(self, token: str):
         """Декодирует JWT, проверяет срок действия и наличие в blacklist."""
         if await self.is_token_blacklisted(token):
-            raise ValueError('Токен недействителен')
+            raise InvalidTokenException('Токен недействителен')
 
         try:
-            return jwt.decode(token, settings.auth.secret_key, algorithms=['HS256'])
+            return jwt.decode(token, settings.auth.secret_key, algorithms=[settings.auth.algorithm])
         except jwt.ExpiredSignatureError:
-            raise ValueError('Токен истёк')
+            raise InvalidTokenException('Токен истёк')
         except jwt.InvalidTokenError:
-            raise ValueError('Некорректный токен')
+            raise InvalidTokenException('Некорректный токен')

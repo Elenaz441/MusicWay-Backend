@@ -12,10 +12,10 @@ class TaskType(Base):
     __tablename__ = 'task_type'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
-    topic_id: Mapped[UUID] = mapped_column(ForeignKey(TopicBlock.id, ondelete='RESTRICT'), nullable=False)
+    block_id: Mapped[UUID] = mapped_column(ForeignKey(TopicBlock.id, ondelete='RESTRICT'), nullable=False)
     name: Mapped[str] = mapped_column(String(length=100), unique=True, nullable=False)
 
-    topic: Mapped[TopicBlock] = relationship(back_populates='task_types')
+    block: Mapped[TopicBlock] = relationship(back_populates='task_types')
     variants: Mapped[list['Variant']] = relationship(back_populates='task_type')
 
     def __str__(self):

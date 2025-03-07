@@ -12,6 +12,7 @@ class RunConfig(BaseModel):
 
 
 class AuthApiPrefix(BaseModel):
+    tag: str = 'Auth'
     prefix: str = '/auth'
     register: str = '/register'
     refresh: str = '/refresh'
@@ -20,10 +21,44 @@ class AuthApiPrefix(BaseModel):
     change_password: str = '/change-password'
 
 
+class TopicBlockPrefix(BaseModel):
+    tag: str = 'Topic blocks'
+    prefix: str = '/topic-blocks'
+    topic_blocks: str = ''
+    statistic: str = '/{block_id}/statistic'
+
+
+class MaterialPrefix(BaseModel):
+    tag: str = 'Study materials'
+    prefix: str = '/materials'
+    materials: str = ''
+    video: str = '/{material_id}/video'
+    text: str = '/{material_id}/text'
+    tasks: str = '/{material_id}/tasks'
+    search: str = '/search'
+
+
+class FeedbackPrefix(BaseModel):
+    tag: str = 'Feedback'
+    prefix: str = '/feedbacks'
+    create_feedback: str = ''
+
+
+class VariantsPrefix(BaseModel):
+    tag: str = 'Variants'
+    prefix: str = '/variants'
+    variants: str = ''
+    variant: str = '/{variant_id}'
+
+
 class ApiV1Prefix(BaseModel):
     prefix: str = '/v1'
     users: str = '/users'
     auth: AuthApiPrefix = AuthApiPrefix()
+    topic_block: TopicBlockPrefix = TopicBlockPrefix()
+    material: MaterialPrefix = MaterialPrefix()
+    feedback: FeedbackPrefix = FeedbackPrefix()
+    variant: VariantsPrefix = VariantsPrefix()
 
 
 class ApiPrefix(BaseModel):
@@ -54,6 +89,7 @@ class AuthConfig(BaseModel):
     token_url: str = '/api/v1/auth/login'
     lifetime_seconds_access: int = 3600
     lifetime_seconds_refresh: int = 86400
+    algorithm: str = 'HS256'
 
 
 class FrontendConfig(BaseModel):

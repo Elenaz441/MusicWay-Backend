@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from services.auth_service import AuthService
+from services import AuthService
 from typing import Annotated
 from schemas import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config import settings
 from dependecies import get_auth_service, get_current_user
-from exception import NoRightsException
+from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
 
-router = APIRouter(tags=['Auth'])
+router = APIRouter(tags=[settings.api.v1.auth.tag])
 
 
 @router.post(settings.api.v1.auth.register, status_code=status.HTTP_201_CREATED)
@@ -21,8 +21,8 @@ async def register(
     try:
         await auth_service.register_user(user_data)
         return {'message': 'Пользователь успешно зарегистрирован'}
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except AlreadyExistsException as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.name))
 
 
 @router.post(settings.api.v1.auth.login, response_model=TokenResponse)
@@ -33,8 +33,8 @@ async def login(
     """Авторизация пользователя."""
     try:
         return await auth_service.login_user(user_data.username, user_data.password)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except IncorrectDataException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.name))
 
 
 @router.get(settings.api.v1.auth.login)
@@ -56,8 +56,8 @@ async def refresh_token(
         data = await auth_service.refresh_token(token)
         await auth_service.invalidate_token(token)
         return data
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except IncorrectDataException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.name))
 
 
 @router.delete(settings.api.v1.auth.logout)
@@ -82,4 +82,4 @@ async def change_password(
         await auth_service.change_password(payload['sub'], payload['role'], data.new_password)
         return {'message': 'Пароль успешно изменён.'}
     except NoRightsException as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))

@@ -1,8 +1,9 @@
 from uuid import UUID, uuid4
 
 import sqlalchemy as alchemy
-from sqlalchemy import String, ForeignKey, Text
+from sqlalchemy import String, ForeignKey, Text, Index, event, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import TSVECTOR
 
 from storage import FileType
 from .base import Base
@@ -13,14 +14,27 @@ class StudyMaterial(Base):
     __tablename__ = 'study_material'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
-    topic_id: Mapped[UUID] = mapped_column(ForeignKey(TopicBlock.id, ondelete='RESTRICT'), nullable=False)
+    block_id: Mapped[UUID] = mapped_column(ForeignKey(TopicBlock.id, ondelete='RESTRICT'), nullable=False)
     name: Mapped[str] = mapped_column(String(length=100), unique=True, nullable=False)
     video_url: Mapped[str] = mapped_column(FileType, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
-    topic: Mapped[TopicBlock] = relationship(back_populates='materials')
+    block: Mapped[TopicBlock] = relationship(back_populates='materials')
     comments: Mapped[list['Feedback']] = relationship(back_populates='material')
     tasks: Mapped[list['Task']] = relationship(back_populates='material')
 
+    search_vector: Mapped[str] = mapped_column(TSVECTOR)
+
+    __table_args__ = (
+        Index('study_materials_search_idx', search_vector, postgresql_using='gin'),
+    )
+
     def __str__(self):
         return self.name
+
+
+@event.listens_for(StudyMaterial, 'before_insert')
+@event.listens_for(StudyMaterial, 'before_update')
+def update_search_vector(mapper, connection, target):
+    """Автоматически обновляет search_vector перед сохранением."""
+    target.search_vector = func.to_tsvector('russian', f'{target.name} {target.text}')

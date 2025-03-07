@@ -1,11 +1,12 @@
 from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis import Redis
-from repositories import UserRepository, RoleRepository
+from repositories import UserRepository, RoleRepository, TopicBlockRepository, MaterialRepository, FeedbackRepository
 from fastapi.security import OAuth2PasswordBearer
 from config import settings
-from services import AuthService
+from services import AuthService, TopicBlockService, MaterialService, FeedbackService
 from database import get_async_session, get_redis_async_session
+from exceptions import InvalidTokenException
 from typing import Annotated
 
 
@@ -28,5 +29,26 @@ async def get_current_user(
     try:
         payload = await auth_service.decode_jwt(token)
         return payload
-    except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+    except InvalidTokenException as e:
+        raise HTTPException(status_code=401, detail=str(e.name))
+
+
+async def get_topic_block_service(
+    db: Annotated[AsyncSession, Depends(get_async_session)]
+) -> TopicBlockService:
+    """Глобальная зависимость для TopicBlockService."""
+    return TopicBlockService(TopicBlockRepository(db))
+
+
+async def get_material_service(
+        db: Annotated[AsyncSession, Depends(get_async_session)]
+) -> MaterialService:
+    """Глобальная зависимость для MaterialService."""
+    return MaterialService(MaterialRepository(db))
+
+
+async def get_feedback_service(
+        db: Annotated[AsyncSession, Depends(get_async_session)]
+):
+    """Глобальная зависимость для FeedbackService."""
+    return FeedbackService(FeedbackRepository(db), MaterialRepository(db))

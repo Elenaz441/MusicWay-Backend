@@ -11,7 +11,7 @@ class UserRepository:
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Поиск пользователя по email."""
-        result = await self.db.execute(select(User).where(User.email == email))
+        result = await self.db.execute(select(User).where(email == User.email))
         return result.scalars().first()
 
     async def create_user(self, user: User) -> User:

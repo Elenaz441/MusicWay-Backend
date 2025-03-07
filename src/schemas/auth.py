@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import Field, EmailStr
 from datetime import date
 from typing import Optional
+from .base import PyBaseModel
 
 
-class UserRegister(BaseModel):
+class UserRegister(PyBaseModel):
     email: EmailStr
     # password: str = Field(min_length=8, max_length=30, pattern=r'^(?=.*[A-Z])(?=.*\d)(?=.*[~!?@#$%^&*\-_+\(\)\[\]{'
     #                                                            r'}><\/\\|\"\'.:,])[a-zA-Z\d~!?@#$%^&*\-_+\(\)\[\]{'
@@ -16,15 +17,14 @@ class UserRegister(BaseModel):
     role: Optional[str] = Field(default='Ученик')
 
 
-class TokenResponse(BaseModel):
+class TokenResponse(PyBaseModel):
     access_token: str
     refresh_token: str
-    token_type: str
 
 
-class RefreshTokenRequest(BaseModel):
+class RefreshTokenRequest(PyBaseModel):
     refresh_token: str
 
 
-class ChangePasswordRequest(BaseModel):
+class ChangePasswordRequest(PyBaseModel):
     new_password: str = Field(min_length=8, max_length=30)
