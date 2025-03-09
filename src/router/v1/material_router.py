@@ -18,7 +18,7 @@ async def get_materials(
         payload: Annotated[dict, Depends(get_current_user)],
         material_service: Annotated[MaterialService, Depends(get_material_service)]
 ):
-    """Получение всех разделов."""
+    """Получение всех материалов по разделу."""
     return await material_service.get_materials(block_id)
 
 

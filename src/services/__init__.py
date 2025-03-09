@@ -2,10 +2,12 @@ __all__ = (
     'AuthService',
     'TopicBlockService',
     'MaterialService',
-    'FeedbackService'
+    'FeedbackService',
+    'VariantService'
 )
 
 from .auth_service import AuthService
 from .topic_block_service import TopicBlockService
 from .material_service import MaterialService
 from .feedback_service import FeedbackService
+from .variant_sevice import VariantService

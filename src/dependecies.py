@@ -1,14 +1,28 @@
-from fastapi import HTTPException, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from redis import Redis
-from repositories import UserRepository, RoleRepository, TopicBlockRepository, MaterialRepository, FeedbackRepository
-from fastapi.security import OAuth2PasswordBearer
-from config import settings
-from services import AuthService, TopicBlockService, MaterialService, FeedbackService
-from database import get_async_session, get_redis_async_session
-from exceptions import InvalidTokenException
 from typing import Annotated
 
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from redis import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from config import settings
+from database import get_async_session, get_redis_async_session
+from exceptions import InvalidTokenException
+from repositories import (
+    UserRepository,
+    RoleRepository,
+    TopicBlockRepository,
+    MaterialRepository,
+    FeedbackRepository,
+    VariantRepository
+)
+from services import (
+    AuthService,
+    TopicBlockService,
+    MaterialService,
+    FeedbackService,
+    VariantService
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
 
@@ -49,6 +63,13 @@ async def get_material_service(
 
 async def get_feedback_service(
         db: Annotated[AsyncSession, Depends(get_async_session)]
-):
+) -> FeedbackService:
     """Глобальная зависимость для FeedbackService."""
     return FeedbackService(FeedbackRepository(db), MaterialRepository(db))
+
+
+async def get_variant_service(
+        db: Annotated[AsyncSession, Depends(get_async_session)]
+) -> VariantService:
+    """Глобальная зависимость VariantService."""
+    return VariantService(VariantRepository(db))

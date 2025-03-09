@@ -7,6 +7,7 @@ from .auth_router import router as auth_router
 from .topic_block_router import router as topic_block_router
 from .material_router import router as material_router
 from .feedback_router import router as feedback_router
+from .variant_router import router as variant_router
 
 router = APIRouter(
     prefix=settings.api.v1.prefix,
@@ -16,3 +17,4 @@ router.include_router(auth_router, prefix=settings.api.v1.auth.prefix)
 router.include_router(topic_block_router, prefix=settings.api.v1.topic_block.prefix)
 router.include_router(material_router, prefix=settings.api.v1.material.prefix)
 router.include_router(feedback_router, prefix=settings.api.v1.feedback.prefix)
+router.include_router(variant_router, prefix=settings.api.v1.variant.prefix)

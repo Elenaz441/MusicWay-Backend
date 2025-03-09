@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from typing import Sequence
 from uuid import UUID
 
 from models import StudyMaterial
