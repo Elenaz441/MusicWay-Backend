@@ -4,7 +4,9 @@ __all__ = (
     'TopicBlockRepository',
     'MaterialRepository',
     'FeedbackRepository',
-    'VariantRepository'
+    'VariantRepository',
+    'AbstractRepository',
+    'SQLAlchemyRepository'
 )
 
 from .user_repo import UserRepository
@@ -13,3 +15,5 @@ from .topic_block_repo import TopicBlockRepository
 from .material_repo import MaterialRepository
 from .feedback_repo import FeedbackRepository
 from .variant_repo import VariantRepository
+from .abstract_repo import AbstractRepository
+from .sqlalchemy_repo import SQLAlchemyRepository

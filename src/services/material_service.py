@@ -1,32 +1,39 @@
-from repositories import MaterialRepository
-from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
-from exceptions import NotFoundException
+from repositories import AbstractRepository
 from uuid import UUID
+from typing import List
+from exceptions import NotFoundException
+from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
 
 
 class MaterialService:
-    def __init__(self, material_repo: MaterialRepository):
-        self.material_repo = material_repo
+    """Сервис для работы с учебными материалами."""
 
-    async def get_materials(self, block_id: UUID) -> list[ShortMaterialResponse]:
-        materials = await self.material_repo.get_materials_by_block(block_id)
+    def __init__(self, repo: AbstractRepository):
+        self.repo = repo
+
+    async def get_materials_by_block(self, block_id: UUID) -> List[ShortMaterialResponse]:
+        """Получает материалы по разделу."""
+        materials = await self.repo.find_all(['id', 'name'], filter_by={'block_id': block_id})
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
 
     async def get_video(self, material_id: UUID) -> MaterialVideoResponse:
-        video_url = await self.material_repo.get_video(material_id)
-        if not video_url:
+        """Получает видео по ID."""
+        result = await self.repo.find_one(['video_url'], id=material_id)
+        if not result:
             raise NotFoundException('учебный материал', 'id')
-        return MaterialVideoResponse(video_url=video_url)
+        return MaterialVideoResponse(video_url=result['video_url'])
 
     async def get_text(self, material_id: UUID) -> MaterialTextResponse:
-        text = await self.material_repo.get_text(material_id)
-        if not text:
+        """Получает текст по ID."""
+        result = await self.repo.find_one(['text'], id=material_id)
+        if not result:
             raise NotFoundException('учебный материал', 'id')
-        return MaterialTextResponse(text=text)
+        return MaterialTextResponse(text=result['text'])
 
-    async def search_materials(self, query: str) -> list[ShortMaterialResponse]:
-        materials = await self.material_repo.search_materials(query)
+    async def search_materials(self, query: str, limit: int = 5) -> List[ShortMaterialResponse]:
+        """Полнотекстовый поиск по учебным материалам."""
+        materials = await self.repo.find_all(['id', 'name'], filter_by={'search_vector': query}, limit=limit)
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
 

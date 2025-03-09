@@ -1,24 +1,31 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from uuid import UUID
-
+from sqlalchemy import select, RowMapping
 from models import Variant, TaskType
+from .sqlalchemy_repo import SQLAlchemyRepository
+from typing import Any, Sequence, List, Optional, Dict
 
 
-class VariantRepository:
-    def __init__(self, db: AsyncSession):
-        self.db = db
+class VariantRepository(SQLAlchemyRepository):
+    """Репозиторий для вариантов упражнений."""
 
-    async def get_variants_by_block(self, block_id: UUID):
-        """Поиск вариантов по разделу."""
-        result = await self.db.execute(
-            select(Variant.id, Variant.name, Variant.image_url)
-            .join(TaskType)
-            .where(block_id == TaskType.block_id)
-        )
-        return result.mappings().all()
+    model = Variant
 
-    async def get_variant_by_id(self, variant_id: UUID):
-        """Получение информации о варианте задания по id"""
-        result = await self.db.execute(select(Variant).where(variant_id == Variant.id))
-        return result.scalars().first()
+    async def find_all(
+            self,
+            fields: List[str],
+            filter_by: Optional[Dict[str, Any]] = None,
+            order_by: Optional[str] = None,
+            limit: Optional[int] = None
+    ) -> Sequence[RowMapping]:
+        """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
+
+        columns = [getattr(self.model, field) for field in fields]
+        stmt = select(*columns).join(TaskType).where(TaskType.block_id == filter_by['block_id'])
+
+        if order_by:
+            stmt = stmt.order_by(getattr(self.model, order_by))
+
+        if limit:
+            stmt = stmt.limit(limit)
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()

@@ -1,17 +1,18 @@
 import redis
 import bcrypt
 import jwt
+from uuid import UUID
 from datetime import datetime, timedelta, timezone
 
-from repositories import UserRepository, RoleRepository
+from repositories import AbstractRepository
 from schemas import UserRegister, TokenResponse
-from models import User
 from config import settings
 from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException, InvalidTokenException
 
 
 class AuthService:
-    def __init__(self, user_repo: UserRepository, role_repo: RoleRepository, redis_client: redis.Redis):
+    """Сервис для работы с авторизацией пользователей."""
+    def __init__(self, user_repo: AbstractRepository, role_repo: AbstractRepository, redis_client: redis.Redis):
         self.user_repo = user_repo
         self.role_repo = role_repo
         self.redis = redis_client
@@ -42,35 +43,38 @@ class AuthService:
         """Проверка наличия токена в blacklist Redis."""
         return await self.redis.exists(f'blacklist:{token}') > 0
 
-    async def register_user(self, user_data: UserRegister) -> User:
+    async def register_user(self, user_data: UserRegister) -> UUID:
         """Регистрация нового пользователя."""
-        existing_user = await self.user_repo.get_user_by_email(user_data.email)
+        existing_user = await self.user_repo.find_one(['id'], email=user_data.email)
         if existing_user:
             raise AlreadyExistsException('пользователь', 'email')
 
         hashed_password = self.hash_password(user_data.password)
-        role = await self.role_repo.get_role_by_name(user_data.role)
-        new_user = User(
-            email=user_data.email,
-            hashed_password=hashed_password,
-            name=user_data.name,
-            surname=user_data.surname,
-            patronymic=user_data.patronymic,
-            birthdate=user_data.birthdate,
-            role_id=role.id)
-        return await self.user_repo.create_user(new_user)
+        role = await self.role_repo.find_one(['id'], name=user_data.role)
+        new_user = {
+            'email': user_data.email,
+            'hashed_password': hashed_password,
+            'name': user_data.name,
+            'surname': user_data.surname,
+            'patronymic': user_data.patronymic,
+            'birthdate': user_data.birthdate,
+            'role_id': role.id
+        }
+        return await self.user_repo.add_one(new_user)
 
     async def login_user(self, email: str, password: str) -> TokenResponse:
         """Авторизация пользователя."""
-        user = await self.user_repo.get_user_by_email(email)
+        user = await self.user_repo.find_one(
+            ['id', 'email', 'role_id', 'hashed_password', 'is_first_login'],
+            email=email)
         if not user or not self.verify_password(password, user.hashed_password):
             raise IncorrectDataException('Неверный email или пароль')
 
-        role = await self.role_repo.get_role_by_id(str(user.role_id))
+        role = await self.role_repo.find_one(['name'], id=user.role_id)
         payload = {'sub': user.email, 'role': role.name, 'is_first_login': user.is_first_login}
 
         if user.is_first_login:
-            await self.user_repo.change_user_is_first_login(user)
+            await self.user_repo.edit_one(user.id, {'is_first_login': False})
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
@@ -95,9 +99,9 @@ class AuthService:
         """Смена пароля преподавателя при первой авторизации"""
         if role_name != 'Преподаватель':
             raise NoRightsException()
-        user = await self.user_repo.get_user_by_email(email)
+        user = await self.user_repo.find_one(['id'], email=email)
         hashed_password = self.hash_password(new_password)
-        await self.user_repo.change_user_password(user, hashed_password)
+        await self.user_repo.edit_one(user.id, {'hashed_password': hashed_password})
 
     async def decode_jwt(self, token: str):
         """Декодирует JWT, проверяет срок действия и наличие в blacklist."""

@@ -19,7 +19,7 @@ async def get_materials(
         material_service: Annotated[MaterialService, Depends(get_material_service)]
 ):
     """Получение всех материалов по разделу."""
-    return await material_service.get_materials(block_id)
+    return await material_service.get_materials_by_block(block_id)
 
 
 @router.get(settings.api.v1.material.video, response_model=MaterialVideoResponse)

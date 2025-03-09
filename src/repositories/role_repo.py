@@ -1,20 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Optional
-
+from .sqlalchemy_repo import SQLAlchemyRepository
 from models import Role
 
 
-class RoleRepository:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-
-    async def get_role_by_name(self, name: str) -> Optional[Role]:
-        """Поиск роли по названию."""
-        result = await self.db.execute(select(Role).where(name == Role.name))
-        return result.scalars().first()
-
-    async def get_role_by_id(self, id: str) -> Optional[Role]:
-        """Поиск роли по id."""
-        result = await self.db.execute(select(Role).where(id == Role.id))
-        return result.scalars().first()
+class RoleRepository(SQLAlchemyRepository):
+    """Репозиторий для ролей."""
+    model = Role
