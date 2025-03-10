@@ -14,7 +14,7 @@ class FeedbackService:
         """Создание обратной связи."""
         if role_name != 'Преподаватель':
             raise NoRightsException()
-        if not await self.material_repo.find_one(['id'], id=feedback.material_id):
+        if not await self.material_repo.find_one(['id'], {'id': feedback.material_id}):
             raise NotFoundException('учебный материал', 'id')
         new_feedback = {
             'material_id': feedback.material_id,

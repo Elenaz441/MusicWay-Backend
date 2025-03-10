@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Type, Any
 
 
 class AbstractRepository(ABC):
@@ -17,7 +17,11 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_one(self, fields: List[str], **filter_by):
+    async def find_one(
+        self,
+        fields: List[str],
+        filter_by: Optional[Dict[str, Any]] = None
+    ):
         """Получает одну запись, возвращая только указанные поля."""
         raise NotImplementedError
 
@@ -27,7 +31,8 @@ class AbstractRepository(ABC):
         fields: List[str],
         filter_by: Optional[Dict[str, Any]] = None,
         order_by: Optional[str] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        group_by: Optional[List[str]] = None
     ):
         """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
         raise NotImplementedError

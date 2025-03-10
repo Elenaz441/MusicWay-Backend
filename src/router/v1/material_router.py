@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from uuid import UUID
 
 from services import MaterialService
-from typing import Annotated
-from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
+from typing import Annotated, List
+from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, VariantForActiveTask
 from dependecies import get_current_user, get_material_service
 from exceptions import NotFoundException
 from config import settings
@@ -12,7 +12,7 @@ from config import settings
 router = APIRouter(tags=[settings.api.v1.material.tag])
 
 
-@router.get(settings.api.v1.material.materials, response_model=list[ShortMaterialResponse])
+@router.get(settings.api.v1.material.materials, response_model=List[ShortMaterialResponse])
 async def get_materials(
         block_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -31,7 +31,7 @@ async def get_material_video(
     try:
         return await material_service.get_video(material_id)
     except NotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e.name))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
 @router.get(settings.api.v1.material.text, response_model=MaterialTextResponse)
@@ -43,10 +43,22 @@ async def get_material_text(
     try:
         return await material_service.get_text(material_id)
     except NotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e.name))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get(settings.api.v1.material.search, response_model=list[ShortMaterialResponse])
+@router.get(settings.api.v1.material.tasks, response_model=List[VariantForActiveTask])
+async def get_material_tasks(
+        material_id: UUID,
+        payload: Annotated[dict, Depends(get_current_user)],
+        material_service: Annotated[MaterialService, Depends(get_material_service)]
+):
+    try:
+        return await material_service.get_tasks(material_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
+
+
+@router.get(settings.api.v1.material.search, response_model=List[ShortMaterialResponse])
 async def get_materials(
         query: str,
         payload: Annotated[dict, Depends(get_current_user)],

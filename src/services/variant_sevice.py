@@ -17,7 +17,7 @@ class VariantService:
     async def get_variant(self, variant_id: UUID, role: str) -> VariantResponse:
         variant = await self.repo.find_one(
             ['id', 'name', 'image_url', 'student_description', 'teacher_description', 'demo_url'],
-            id=variant_id)
+            {'id': variant_id})
         if not variant:
             raise NotFoundException('вариант', 'id')
         variant_dict = dict(variant)

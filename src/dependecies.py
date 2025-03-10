@@ -14,14 +14,17 @@ from repositories import (
     TopicBlockRepository,
     MaterialRepository,
     FeedbackRepository,
-    VariantRepository
+    VariantRepository,
+    TaskRepository,
+    HomeworkTaskRepository
 )
 from services import (
     AuthService,
     TopicBlockService,
     MaterialService,
     FeedbackService,
-    VariantService
+    VariantService,
+    TaskService
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
@@ -58,7 +61,7 @@ async def get_material_service(
         db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> MaterialService:
     """Глобальная зависимость для MaterialService."""
-    return MaterialService(MaterialRepository(db))
+    return MaterialService(MaterialRepository(db), TaskRepository(db))
 
 
 async def get_feedback_service(
@@ -73,3 +76,10 @@ async def get_variant_service(
 ) -> VariantService:
     """Глобальная зависимость VariantService."""
     return VariantService(VariantRepository(db))
+
+
+async def get_task_service(
+        db: Annotated[AsyncSession, Depends(get_async_session)]
+) -> TaskService:
+    """Глобальная зависимость VariantService."""
+    return TaskService(TaskRepository(db), VariantRepository(db), HomeworkTaskRepository(db))

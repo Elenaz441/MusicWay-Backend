@@ -14,12 +14,17 @@ class VariantRepository(SQLAlchemyRepository):
             fields: List[str],
             filter_by: Optional[Dict[str, Any]] = None,
             order_by: Optional[str] = None,
-            limit: Optional[int] = None
+            limit: Optional[int] = None,
+            group_by: Optional[List[str]] = None
     ) -> Sequence[RowMapping]:
         """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
 
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns).join(TaskType).where(TaskType.block_id == filter_by['block_id'])
+
+        if group_by:
+            group_columns = [getattr(self.model, field) for field in group_by]
+            stmt = stmt.group_by(*group_columns)
 
         if order_by:
             stmt = stmt.order_by(getattr(self.model, order_by))

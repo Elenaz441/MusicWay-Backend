@@ -2,38 +2,51 @@ from repositories import AbstractRepository
 from uuid import UUID
 from typing import List
 from exceptions import NotFoundException
-from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
+from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, VariantForActiveTask
 
 
 class MaterialService:
     """Сервис для работы с учебными материалами."""
 
-    def __init__(self, repo: AbstractRepository):
-        self.repo = repo
+    def __init__(self, material_repo: AbstractRepository, task_repo: AbstractRepository):
+        self.material_repo = material_repo
+        self.task_repo = task_repo
 
     async def get_materials_by_block(self, block_id: UUID) -> List[ShortMaterialResponse]:
         """Получает материалы по разделу."""
-        materials = await self.repo.find_all(['id', 'name'], filter_by={'block_id': block_id})
+        materials = await self.material_repo.find_all(['id', 'name'], filter_by={'block_id': block_id})
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
 
     async def get_video(self, material_id: UUID) -> MaterialVideoResponse:
         """Получает видео по ID."""
-        result = await self.repo.find_one(['video_url'], id=material_id)
+        result = await self.material_repo.find_one(['video_url'], {'id': material_id})
         if not result:
             raise NotFoundException('учебный материал', 'id')
         return MaterialVideoResponse(video_url=result['video_url'])
 
     async def get_text(self, material_id: UUID) -> MaterialTextResponse:
         """Получает текст по ID."""
-        result = await self.repo.find_one(['text'], id=material_id)
+        result = await self.material_repo.find_one(['text'], {'id': material_id})
         if not result:
             raise NotFoundException('учебный материал', 'id')
         return MaterialTextResponse(text=result['text'])
 
+    async def get_tasks(self, material_id: UUID) -> List[VariantForActiveTask]:
+        """Получает задания, относящиеся к разделу"""
+        check = await self.material_repo.find_one(['id'], {'id': material_id})
+        if not check:
+            raise NotFoundException('учебный материал', 'id')
+        tasks = await self.task_repo.find_all(
+            ['variant_id', 'name', 'count'],
+            filter_by={'material_id': material_id, 'is_study_task': True},
+            group_by=['variant_id', 'name'])
+        tasks = [VariantForActiveTask.model_validate(task) for task in tasks]
+        return tasks
+
     async def search_materials(self, query: str, limit: int = 5) -> List[ShortMaterialResponse]:
         """Полнотекстовый поиск по учебным материалам."""
-        materials = await self.repo.find_all(['id', 'name'], filter_by={'search_vector': query}, limit=limit)
+        materials = await self.material_repo.find_all(['id', 'name'], filter_by={'search_vector': query}, limit=limit)
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
 

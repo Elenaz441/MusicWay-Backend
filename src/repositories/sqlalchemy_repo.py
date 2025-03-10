@@ -1,7 +1,7 @@
 from uuid import UUID
 from sqlalchemy import insert, select, update, delete, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Dict, Any, Sequence
+from typing import List, Optional, Dict, Any, Sequence, Type
 
 from .abstract_repo import AbstractRepository
 
@@ -33,10 +33,15 @@ class SQLAlchemyRepository(AbstractRepository):
         await self.db.commit()
         return res.scalar_one()
 
-    async def find_one(self, fields: List[str], **filter_by) -> RowMapping:
+    async def find_one(self, fields: List[str], filter_by: Optional[Dict[str, Any]] = None) -> RowMapping:
         """Получает одну запись, возвращая только указанные поля."""
         columns = [getattr(self.model, field) for field in fields]
-        stmt = select(*columns).filter_by(**filter_by)
+        stmt = select(*columns)
+
+        if filter_by:
+            filters = [getattr(self.model, key) == value for key, value in filter_by.items()]
+            stmt = stmt.where(*filters)
+
         res = await self.db.execute(stmt)
         return res.mappings().first()
 
@@ -45,7 +50,8 @@ class SQLAlchemyRepository(AbstractRepository):
             fields: List[str],
             filter_by: Optional[Dict[str, Any]] = None,
             order_by: Optional[str] = None,
-            limit: Optional[int] = None
+            limit: Optional[int] = None,
+            group_by: Optional[List[str]] = None
     ) -> Sequence[RowMapping]:
         """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
 
@@ -55,6 +61,10 @@ class SQLAlchemyRepository(AbstractRepository):
         if filter_by:
             filters = [getattr(self.model, key) == value for key, value in filter_by.items()]
             stmt = stmt.where(*filters)
+
+        if group_by:
+            group_columns = [getattr(self.model, field) for field in group_by]
+            stmt = stmt.group_by(*group_columns)
 
         if order_by:
             stmt = stmt.order_by(getattr(self.model, order_by))

@@ -9,11 +9,14 @@ __all__ = [
     'MaterialTextResponse',
     'CreateFeedback',
     'ShortVariantResponse',
-    'VariantResponse'
+    'VariantResponse',
+    'VariantForActiveTask',
+    'TaskResponse'
 ]
 
 from .auth import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
 from .topic_block import TopicBlockResponse
 from .material import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
 from .feedback import CreateFeedback
-from .variant import ShortVariantResponse, VariantResponse
+from .variant import ShortVariantResponse, VariantResponse, VariantForActiveTask
+from .task import TaskResponse
