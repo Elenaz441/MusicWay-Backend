@@ -1,11 +1,11 @@
-from repositories import AbstractRepository
+from repositories import TopicBlockRepository
 from schemas import TopicBlockResponse
 from typing import List
 
 
 class TopicBlockService:
     """Сервис для работы с разделами."""
-    def __init__(self, block_repo: AbstractRepository):
+    def __init__(self, block_repo: TopicBlockRepository):
         self.repo = block_repo
 
     async def get_blocks(self) -> List[TopicBlockResponse]:

@@ -31,8 +31,7 @@ class AbstractRepository(ABC):
         fields: List[str],
         filter_by: Optional[Dict[str, Any]] = None,
         order_by: Optional[str] = None,
-        limit: Optional[int] = None,
-        group_by: Optional[List[str]] = None
+        limit: Optional[int] = None
     ):
         """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
         raise NotImplementedError

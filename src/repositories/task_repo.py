@@ -1,7 +1,8 @@
 from .sqlalchemy_repo import SQLAlchemyRepository
-from models import Task, Variant
-from typing import List, Optional, Dict, Any, Sequence, Type
+from models import Task, Variant, HomeworkTask
+from typing import List, Optional, Dict, Any, Sequence
 from sqlalchemy import select, RowMapping, func
+from uuid import UUID
 
 
 class TaskRepository(SQLAlchemyRepository):
@@ -26,49 +27,36 @@ class TaskRepository(SQLAlchemyRepository):
         res = await self.db.execute(stmt)
         return res.mappings().first()
 
-    async def find_all(
-            self,
-            fields: List[str],
-            filter_by: Optional[Dict[str, Any]] = None,
-            order_by: Optional[str] = None,
-            limit: Optional[int] = None,
-            group_by: Optional[List[str]] = None
-    ) -> Sequence[RowMapping]:
-        """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
+    async def find_all_by_material(self, material_id: UUID) -> Sequence[RowMapping]:
+        """Возвращает количество упражнений, сгруппированных по варианту, для учебного материала."""
 
-        join_required = False
-        columns = []
-        for field in fields:
-            if field == 'count':
-                columns.append(func.count(Task.id).label('count'))
-            elif field == 'name':
-                columns.append(Variant.name.label('name'))
-                join_required = True
-            else:
-                columns.append(getattr(self.model, field))
-        stmt = select(*columns)
+        stmt = (
+            select(
+                Task.variant_id.label('variant_id'),
+                Variant.name.label('name'),
+                func.count(Task.id).label('count')
+            )
+            .join(Variant, Task.variant_id == Variant.id)
+            .where(material_id == Task.material_id, Task.is_study_task)
+            .group_by(Task.variant_id, Variant.name)
+        )
 
-        if join_required:
-            stmt = stmt.join(Variant, Task.variant_id == Variant.id)
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
 
-        if filter_by:
-            filters = [getattr(self.model, key) == value for key, value in filter_by.items()]
-            stmt = stmt.where(*filters)
-
-        if group_by:
-            group_columns = []
-            for field in group_by:
-                if field == 'name':
-                    group_columns.append(Variant.name)
-                else:
-                    group_columns.append(getattr(self.model, field))
-            stmt = stmt.group_by(*group_columns)
-
-        if order_by:
-            stmt = stmt.order_by(getattr(self.model, order_by))
-
-        if limit:
-            stmt = stmt.limit(limit)
+    async def find_all_by_homework(self, homework_id: UUID, student_id: UUID) -> Sequence[RowMapping]:
+        """Возвращает количество упражнений, сгруппированных по варианту, для домашнего задания."""
+        stmt = (
+            select(
+                Variant.id.label('variant_id'),
+                Variant.name,
+                func.count(Task.id).label('count'),
+            )
+            .join(Task, Task.variant_id == Variant.id)
+            .join(HomeworkTask, HomeworkTask.task_id == Task.id)
+            .where(homework_id == HomeworkTask.homework_id, student_id == HomeworkTask.student_id)
+            .group_by(Variant.id)
+        )
 
         res = await self.db.execute(stmt)
         return res.mappings().all()

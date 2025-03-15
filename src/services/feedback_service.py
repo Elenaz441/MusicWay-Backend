@@ -1,4 +1,4 @@
-from repositories import AbstractRepository
+from repositories import MaterialRepository, FeedbackRepository
 from schemas import CreateFeedback
 from exceptions import NoRightsException, NotFoundException
 from uuid import UUID
@@ -6,7 +6,7 @@ from uuid import UUID
 
 class FeedbackService:
     """Сервис для работы с обратной связью."""
-    def __init__(self, feedback_repo: AbstractRepository, material_repo: AbstractRepository):
+    def __init__(self, feedback_repo: FeedbackRepository, material_repo: MaterialRepository):
         self.material_repo = material_repo
         self.feedback_repo = feedback_repo
 

@@ -1,7 +1,8 @@
 from sqlalchemy import select, RowMapping
 from models import Variant, TaskType
 from .sqlalchemy_repo import SQLAlchemyRepository
-from typing import Any, Sequence, List, Optional, Dict
+from typing import Sequence, List
+from uuid import UUID
 
 
 class VariantRepository(SQLAlchemyRepository):
@@ -9,28 +10,8 @@ class VariantRepository(SQLAlchemyRepository):
 
     model = Variant
 
-    async def find_all(
-            self,
-            fields: List[str],
-            filter_by: Optional[Dict[str, Any]] = None,
-            order_by: Optional[str] = None,
-            limit: Optional[int] = None,
-            group_by: Optional[List[str]] = None
-    ) -> Sequence[RowMapping]:
-        """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
-
+    async def find_all_by_block(self, block_id: UUID, fields: List[str]) -> Sequence[RowMapping]:
         columns = [getattr(self.model, field) for field in fields]
-        stmt = select(*columns).join(TaskType).where(TaskType.block_id == filter_by['block_id'])
-
-        if group_by:
-            group_columns = [getattr(self.model, field) for field in group_by]
-            stmt = stmt.group_by(*group_columns)
-
-        if order_by:
-            stmt = stmt.order_by(getattr(self.model, order_by))
-
-        if limit:
-            stmt = stmt.limit(limit)
-
+        stmt = select(*columns).join(TaskType).where(block_id == TaskType.block_id)
         res = await self.db.execute(stmt)
         return res.mappings().all()

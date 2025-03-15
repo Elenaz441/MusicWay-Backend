@@ -16,7 +16,9 @@ from repositories import (
     FeedbackRepository,
     VariantRepository,
     TaskRepository,
-    HomeworkTaskRepository
+    HomeworkTaskRepository,
+    HomeworkRepository,
+    StudentClassRepository, TaskTypeRepository
 )
 from services import (
     AuthService,
@@ -24,7 +26,8 @@ from services import (
     MaterialService,
     FeedbackService,
     VariantService,
-    TaskService
+    TaskService,
+    HomeworkService
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
@@ -81,5 +84,20 @@ async def get_variant_service(
 async def get_task_service(
         db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> TaskService:
-    """Глобальная зависимость VariantService."""
+    """Глобальная зависимость TaskService."""
     return TaskService(TaskRepository(db), VariantRepository(db), HomeworkTaskRepository(db))
+
+
+async def get_homework_service(
+        db: Annotated[AsyncSession, Depends(get_async_session)]
+) -> HomeworkService:
+    """Глобальная зависимость HomeworkService."""
+    return HomeworkService(
+        HomeworkRepository(db),
+        StudentClassRepository(db),
+        TaskRepository(db),
+        MaterialRepository(db),
+        TaskTypeRepository(db),
+        VariantRepository(db),
+        HomeworkTaskRepository(db)
+    )

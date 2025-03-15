@@ -15,7 +15,7 @@ class Task(Base):
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
     variant_id: Mapped[UUID] = mapped_column(ForeignKey(Variant.id, ondelete='RESTRICT'), nullable=False)
-    material_id: Mapped[UUID] = mapped_column(ForeignKey(StudyMaterial.id, ondelete='RESTRICT'), nullable=False)
+    material_id: Mapped[UUID] = mapped_column(ForeignKey(StudyMaterial.id, ondelete='RESTRICT'), nullable=True)
     condition: Mapped[str] = mapped_column(Text, nullable=False)
     content: Mapped[dict] = mapped_column(JSONB, nullable=False)
     answer: Mapped[dict] = mapped_column(JSONB, nullable=False)

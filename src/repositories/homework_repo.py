@@ -1,7 +1,162 @@
 from .sqlalchemy_repo import SQLAlchemyRepository
-from models import Homework
+from models import Homework, Task, HomeworkTask, Variant, TopicBlock, User
+from typing import Sequence, Optional
+from sqlalchemy import select, func, between, exists, RowMapping
+from sqlalchemy.sql.functions import coalesce
+from uuid import UUID
 
 
 class HomeworkRepository(SQLAlchemyRepository):
     """Репозиторий для домашних заданий."""
     model = Homework
+
+    async def find_one_with_mark(self, homework_id: UUID, student_id: UUID) -> RowMapping:
+        """Получает одну запись."""
+        stmt = (
+            select(
+                Homework.id, Homework.topic,
+                Homework.start_date, Homework.end_date, TopicBlock.name.label('block'),
+                coalesce(func.sum(HomeworkTask.mark), 0).label('student_mark'),
+                func.sum(Task.max_mark).label('max_mark'),
+            )
+            .join(HomeworkTask, HomeworkTask.homework_id == Homework.id)
+            .join(Task, HomeworkTask.task_id == Task.id)
+            .join(TopicBlock, Homework.block_id == TopicBlock.id)
+            .where(homework_id == Homework.id, student_id == HomeworkTask.student_id)
+            .group_by(Homework.id, TopicBlock.name)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().first()
+
+    async def find_all_active(self, class_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
+        """Получает активные домашние задания по классу."""
+
+        filter_by = [class_id == Homework.class_id, between(func.now(), Homework.start_date, Homework.end_date)]
+        if student_id:
+            filter_by.append(
+                exists().where(
+                    HomeworkTask.homework_id == Homework.id,
+                    student_id == HomeworkTask.student_id,
+                    HomeworkTask.mark.is_(None)
+                ).correlate(Homework)
+            )
+
+        stmt = (
+            select(
+                Homework.id, Homework.topic,
+                Homework.start_date, Homework.end_date,
+                func.sum(Task.max_mark).label('max_mark'),
+            )
+            .join(HomeworkTask, HomeworkTask.homework_id == Homework.id)
+            .join(Task, HomeworkTask.task_id == Task.id)
+            .where(*filter_by)
+            .group_by(Homework.id)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
+
+    async def find_all_completed(self, class_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
+        """Получает завершенные домашние задания по классу"""
+        filter_by = [class_id == Homework.class_id]
+        if student_id:
+            filter_by.append(
+                (Homework.end_date < func.now())
+                | ~exists().where(
+                    HomeworkTask.homework_id == Homework.id,
+                    student_id == HomeworkTask.student_id,
+                    HomeworkTask.mark.is_(None)
+                ).correlate(Homework)
+            )
+            filter_by.append(student_id == HomeworkTask.student_id)
+        else:
+            filter_by.append(Homework.end_date < func.now())
+        stmt = (
+            select(
+                Homework.id, Homework.topic,
+                coalesce(func.sum(HomeworkTask.mark), 0).label('student_mark'),
+                func.sum(Task.max_mark).label('max_mark'),
+            )
+            .join(HomeworkTask, HomeworkTask.homework_id == Homework.id)
+            .join(Task, HomeworkTask.task_id == Task.id)
+            .where(*filter_by)
+            .group_by(Homework.id)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
+
+    async def is_completed(self, homework_id: UUID, student_id: UUID) -> bool:
+        """Определяет, завершил ли ученик ДЗ (либо по сроку, либо по оценкам)."""
+        stmt = select(
+            exists().where(
+                homework_id == Homework.id,
+                Homework.end_date < func.now()
+            )
+            | ~exists().where(
+                homework_id == HomeworkTask.homework_id,
+                student_id == HomeworkTask.student_id,
+                HomeworkTask.mark.is_(None)
+            )
+        )
+        res = await self.db.execute(stmt)
+        return res.scalar()
+
+    async def get_marks(self, homework_id: UUID, student_id: UUID) -> Sequence[RowMapping]:
+        """Получает все задания и оценки в ДЗ для ученика."""
+
+        filter_by = [homework_id == HomeworkTask.homework_id, student_id == HomeworkTask.student_id]
+
+        stmt = (
+            select(
+                Variant.name.label('name'),
+                Task.number,
+                func.coalesce(HomeworkTask.mark, 0).label('student_mark'),
+                Task.max_mark
+            )
+            .join(Task, Task.variant_id == Variant.id)
+            .join(HomeworkTask, HomeworkTask.task_id == Task.id)
+            .where(*filter_by)
+            .order_by(Task.number)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
+
+    async def get_homework_students(self, homework_id: UUID) -> Sequence[RowMapping]:
+        """Получает список учеников и их общий балл по домашнему заданию."""
+        stmt = (
+            select(
+                User.id,
+                User.name,
+                User.surname,
+                User.patronymic,
+                func.sum(HomeworkTask.mark).label('student_mark')
+            )
+            .join(HomeworkTask, HomeworkTask.student_id == User.id)
+            .where(homework_id == HomeworkTask.homework_id)
+            .group_by(User.id)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
+
+    async def get_homework_tasks(self, homework_id: UUID) -> Sequence[RowMapping]:
+        """Получает список заданий для всех учеников с баллами."""
+        stmt = (
+            select(
+                User.id.label('student_id'),
+                Variant.name.label('task_name'),
+                HomeworkTask.mark.label('student_mark'),
+                Task.max_mark
+            )
+            .join(HomeworkTask, HomeworkTask.student_id == User.id)
+            .join(Task, HomeworkTask.task_id == Task.id)
+            .join(Variant, Task.variant_id == Variant.id)
+            .where(homework_id == HomeworkTask.homework_id)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
+

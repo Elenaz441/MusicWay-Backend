@@ -9,6 +9,7 @@ from .material_router import router as material_router
 from .feedback_router import router as feedback_router
 from .variant_router import router as variant_router
 from .task_router import router as task_router
+from .homework_router import router as homework_router
 
 router = APIRouter(
     prefix=settings.api.v1.prefix,
@@ -20,3 +21,4 @@ router.include_router(material_router, prefix=settings.api.v1.material.prefix)
 router.include_router(feedback_router, prefix=settings.api.v1.feedback.prefix)
 router.include_router(variant_router, prefix=settings.api.v1.variant.prefix)
 router.include_router(task_router, prefix=settings.api.v1.task.prefix)
+router.include_router(homework_router, prefix=settings.api.v1.homework.prefix)

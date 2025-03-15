@@ -1,4 +1,4 @@
-from repositories import AbstractRepository
+from repositories import VariantRepository
 from schemas import ShortVariantResponse, VariantResponse
 from exceptions import NotFoundException
 from uuid import UUID
@@ -6,11 +6,11 @@ from uuid import UUID
 
 class VariantService:
     """Сервис для работы с вариантами упражнений."""
-    def __init__(self, repo: AbstractRepository):
+    def __init__(self, repo: VariantRepository):
         self.repo = repo
 
     async def get_variants_by_block(self, block_id: UUID) -> list[ShortVariantResponse]:
-        variants = await self.repo.find_all(['id', 'name', 'image_url'], {'block_id': block_id})
+        variants = await self.repo.find_all_by_block(block_id, ['id', 'name', 'image_url'])
         result = [ShortVariantResponse.model_validate(rec) for rec in variants]
         return result
 

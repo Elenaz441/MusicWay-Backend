@@ -15,7 +15,7 @@ class HomeworkTask(Base):
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
     student_id: Mapped[UUID] = mapped_column(ForeignKey(User.id, ondelete='RESTRICT'), nullable=False)
-    homework_id: Mapped[UUID] = mapped_column(ForeignKey(Homework.id, ondelete='RESTRICT'), nullable=False)
+    homework_id: Mapped[UUID] = mapped_column(ForeignKey(Homework.id, ondelete='CASCADE'), nullable=False)
     task_id: Mapped[UUID] = mapped_column(ForeignKey(Task.id, ondelete='RESTRICT'), nullable=False)
     mark: Mapped[str] = mapped_column(Integer, nullable=True)
 

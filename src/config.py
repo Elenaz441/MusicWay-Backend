@@ -44,20 +44,25 @@ class FeedbackPrefix(BaseModel):
     create_feedback: str = ''
 
 
-class VariantsPrefix(BaseModel):
+class VariantPrefix(BaseModel):
     tag: str = 'Variants'
     prefix: str = '/variants'
     variants: str = ''
     variant: str = '/{variant_id}'
 
 
-class TasksPrefix(BaseModel):
+class TaskPrefix(BaseModel):
     tag: str = 'Tasks'
     prefix: str = '/tasks'
     create_task: str = ''
     get_by_id: str = '/{task_id}'
     get_by_homework: str = '/{homework_id}/{task_number}'
     get_by_material: str = '/{material_id}/{variant_id}/{task_number}'
+
+
+class HomeworkPrefix(BaseModel):
+    tag: str = 'Homeworks'
+    prefix: str = '/homeworks'
 
 
 class ApiV1Prefix(BaseModel):
@@ -67,8 +72,9 @@ class ApiV1Prefix(BaseModel):
     topic_block: TopicBlockPrefix = TopicBlockPrefix()
     material: MaterialPrefix = MaterialPrefix()
     feedback: FeedbackPrefix = FeedbackPrefix()
-    variant: VariantsPrefix = VariantsPrefix()
-    task: TasksPrefix = TasksPrefix()
+    variant: VariantPrefix = VariantPrefix()
+    task: TaskPrefix = TaskPrefix()
+    homework: HomeworkPrefix = HomeworkPrefix()
 
 
 class ApiPrefix(BaseModel):

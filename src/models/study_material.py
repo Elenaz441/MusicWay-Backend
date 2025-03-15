@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 
 import sqlalchemy as alchemy
-from sqlalchemy import String, ForeignKey, Text, Index, event, func
+from sqlalchemy import String, ForeignKey, Text, Index, event, func, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 
@@ -18,6 +18,7 @@ class StudyMaterial(Base):
     name: Mapped[str] = mapped_column(String(length=100), unique=True, nullable=False)
     video_url: Mapped[str] = mapped_column(FileType, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
 
     block: Mapped[TopicBlock] = relationship(back_populates='materials')
     comments: Mapped[list['Feedback']] = relationship(back_populates='material')

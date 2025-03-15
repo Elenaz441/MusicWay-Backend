@@ -4,7 +4,7 @@ import jwt
 from uuid import UUID
 from datetime import datetime, timedelta, timezone
 
-from repositories import AbstractRepository
+from repositories import UserRepository, RoleRepository
 from schemas import UserRegister, TokenResponse
 from config import settings
 from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException, InvalidTokenException
@@ -12,7 +12,7 @@ from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataE
 
 class AuthService:
     """Сервис для работы с авторизацией пользователей."""
-    def __init__(self, user_repo: AbstractRepository, role_repo: AbstractRepository, redis_client: redis.Redis):
+    def __init__(self, user_repo: UserRepository, role_repo: RoleRepository, redis_client: redis.Redis):
         self.user_repo = user_repo
         self.role_repo = role_repo
         self.redis = redis_client
@@ -72,7 +72,7 @@ class AuthService:
             raise IncorrectDataException('Неверный email или пароль')
 
         role = await self.role_repo.find_one(['name'], {'id': user.role_id})
-        payload = {'sub': user.email, 'role': role.name, 'is_first_login': user.is_first_login}
+        payload = {'sub': str(user.id), 'role': role.name, 'is_first_login': user.is_first_login}
 
         if user.is_first_login:
             await self.user_repo.edit_one(user.id, {'is_first_login': False})

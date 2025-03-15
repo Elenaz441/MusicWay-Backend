@@ -1,4 +1,4 @@
-from repositories import AbstractRepository
+from repositories import TaskRepository, VariantRepository, HomeworkTaskRepository
 from uuid import UUID
 from typing import List
 from exceptions import NotFoundException
@@ -9,7 +9,12 @@ from models import Variant, HomeworkTask
 class TaskService:
     """Сервис для работы с упражнениями."""
 
-    def __init__(self, task_repo: AbstractRepository, variant_repo: AbstractRepository, hw_task_repo: AbstractRepository):
+    def __init__(
+            self,
+            task_repo: TaskRepository,
+            variant_repo: VariantRepository,
+            hw_task_repo: HomeworkTaskRepository
+    ):
         self.task_repo = task_repo
         self.variant_repo = variant_repo
         self.hw_task_repo = hw_task_repo

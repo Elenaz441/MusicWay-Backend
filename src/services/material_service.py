@@ -1,4 +1,4 @@
-from repositories import AbstractRepository
+from repositories import MaterialRepository, TaskRepository
 from uuid import UUID
 from typing import List
 from exceptions import NotFoundException
@@ -8,7 +8,7 @@ from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextRe
 class MaterialService:
     """Сервис для работы с учебными материалами."""
 
-    def __init__(self, material_repo: AbstractRepository, task_repo: AbstractRepository):
+    def __init__(self, material_repo: MaterialRepository, task_repo: TaskRepository):
         self.material_repo = material_repo
         self.task_repo = task_repo
 
@@ -37,10 +37,7 @@ class MaterialService:
         check = await self.material_repo.find_one(['id'], {'id': material_id})
         if not check:
             raise NotFoundException('учебный материал', 'id')
-        tasks = await self.task_repo.find_all(
-            ['variant_id', 'name', 'count'],
-            filter_by={'material_id': material_id, 'is_study_task': True},
-            group_by=['variant_id', 'name'])
+        tasks = await self.task_repo.find_all_by_material(material_id)
         tasks = [VariantForActiveTask.model_validate(task) for task in tasks]
         return tasks
 

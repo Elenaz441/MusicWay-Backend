@@ -17,6 +17,7 @@ class TopicBlock(Base):
 
     materials: Mapped[list['StudyMaterial']] = relationship(back_populates='block')
     task_types: Mapped[list['TaskType']] = relationship(back_populates='block')
+    homeworks: Mapped[list['Homework']] = relationship(back_populates='block')
 
     def __str__(self):
         return self.name

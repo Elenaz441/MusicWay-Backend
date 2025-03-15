@@ -9,7 +9,9 @@ __all__ = (
     'VariantRepository',
     'HomeworkRepository',
     'TaskRepository',
-    'HomeworkTaskRepository'
+    'HomeworkTaskRepository',
+    'StudentClassRepository',
+    'TaskTypeRepository'
 )
 
 from .abstract_repo import AbstractRepository
@@ -23,3 +25,5 @@ from .variant_repo import VariantRepository
 from .homework_repo import HomeworkRepository
 from .task_repo import TaskRepository
 from .homework_task_repo import HomeworkTaskRepository
+from .student_class_repo import StudentClassRepository
+from .task_type_repo import TaskTypeRepository

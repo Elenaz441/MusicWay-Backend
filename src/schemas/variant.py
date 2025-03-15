@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 
 from .base import PyBaseModel
 from .task import TaskForLastHomework
@@ -14,7 +14,7 @@ class ShortVariantResponse(PyBaseModel):
 class VariantResponse(ShortVariantResponse):
     description: str
     demo_url: str
-    settings: dict
+    settings: Dict[str, Any]
 
 
 class VariantForActiveTask(PyBaseModel):
@@ -28,3 +28,12 @@ class VariantForLastTask(PyBaseModel):
     student_mark: int
     max_mark: int
     tasks: List[TaskForLastHomework]
+
+
+class VariantForTeacher(VariantForActiveTask):
+    max_mark: int
+
+
+class VariantForCreateHW(PyBaseModel):
+    id: UUID
+    settings: Dict[str, Any]

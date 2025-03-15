@@ -4,7 +4,8 @@ __all__ = (
     'MaterialService',
     'FeedbackService',
     'VariantService',
-    'TaskService'
+    'TaskService',
+    'HomeworkService'
 )
 
 from .auth_service import AuthService
@@ -13,3 +14,4 @@ from .material_service import MaterialService
 from .feedback_service import FeedbackService
 from .variant_sevice import VariantService
 from .task_service import TaskService
+from .homework_service import HomeworkService
