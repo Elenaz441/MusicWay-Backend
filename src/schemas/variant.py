@@ -34,6 +34,6 @@ class VariantForTeacher(VariantForActiveTask):
     max_mark: int
 
 
-class VariantForCreateHW(PyBaseModel):
+class VariantForCreateTask(PyBaseModel):
     id: UUID
     settings: Dict[str, Any]

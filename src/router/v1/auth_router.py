@@ -9,10 +9,10 @@ from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataE
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
 
-router = APIRouter(tags=[settings.api.v1.auth.tag])
+router = APIRouter(tags=['Auth'])
 
 
-@router.post(settings.api.v1.auth.register, status_code=status.HTTP_201_CREATED)
+@router.post('/register', status_code=status.HTTP_201_CREATED)
 async def register(
         user_data: UserRegister,
         auth_service: Annotated[AuthService, Depends(get_auth_service)]
@@ -25,7 +25,7 @@ async def register(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.name))
 
 
-@router.post(settings.api.v1.auth.login, response_model=TokenResponse)
+@router.post('/login', response_model=TokenResponse)
 async def login(
         user_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         auth_service: Annotated[AuthService, Depends(get_auth_service)]
@@ -37,15 +37,15 @@ async def login(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.name))
 
 
-@router.get(settings.api.v1.auth.login)
+@router.get('/login')
 async def get_login_status(
         payload: Annotated[dict, Depends(get_current_user)]
 ):
     """Проверка статуса авторизации."""
-    return {'message': 'Вы авторизованы', 'email': payload['sub'], 'role': payload['role']}
+    return {'message': 'Вы авторизованы', 'id': payload['sub'], 'role': payload['role']}
 
 
-@router.post(settings.api.v1.auth.refresh, response_model=TokenResponse)
+@router.post('/refresh', response_model=TokenResponse)
 async def refresh_token(
         token_data: RefreshTokenRequest,
         auth_service: Annotated[AuthService, Depends(get_auth_service)]
@@ -60,7 +60,7 @@ async def refresh_token(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.name))
 
 
-@router.delete(settings.api.v1.auth.logout)
+@router.delete('/logout')
 async def logout(
         token: Annotated[str, Depends(oauth2_scheme)],
         payload: Annotated[dict, Depends(get_current_user)],
@@ -71,7 +71,7 @@ async def logout(
     return {'message': 'Вы успешно вышли из системы'}
 
 
-@router.patch(settings.api.v1.auth.change_password)
+@router.patch('/change-password')
 async def change_password(
         data: ChangePasswordRequest,
         payload: Annotated[dict, Depends(get_current_user)],

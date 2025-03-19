@@ -1,5 +1,5 @@
 from .base import PyBaseModel
-from .variant import VariantForActiveTask, VariantForLastTask, VariantForTeacher, VariantForCreateHW
+from .variant import VariantForActiveTask, VariantForLastTask, VariantForTeacher, VariantForCreateTask
 from .material import ShortMaterialResponse
 from .user import UserResultTask
 from datetime import date
@@ -28,6 +28,11 @@ class ShortLastHomework(PyBaseModel):
     max_mark: int
 
 
+class ShortLastHWTeacher(PyBaseModel):
+    id: UUID
+    topic: str
+
+
 class LastHomework(ShortLastHomework):
     task_type_variants: List[VariantForLastTask]
 
@@ -44,7 +49,7 @@ class CreateHomework(PyBaseModel):
     end_date: date
     block_id: UUID
     class_id: UUID
-    variants: List[VariantForCreateHW]
+    variants: List[VariantForCreateTask]
 
 
 class EditHomework(PyBaseModel):

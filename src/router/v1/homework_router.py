@@ -5,11 +5,10 @@ from services import HomeworkService
 from typing import Annotated, List, Union
 from schemas import ShortActiveHomework, ShortLastHomework, ActiveHomework, LastHomework, TeacherHomework, CreateHomework, EditHomework
 from dependecies import get_current_user, get_homework_service
-from config import settings
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
 
 
-router = APIRouter(tags=[settings.api.v1.homework.tag])
+router = APIRouter(tags=['Homework'])
 
 
 @router.post('/create', response_model=UUID)

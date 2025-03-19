@@ -2,15 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from services import FeedbackService
 from typing import Annotated
 from schemas import CreateFeedback
-from config import settings
 from dependecies import get_feedback_service, get_current_user
 from exceptions import NoRightsException, NotFoundException
 
 
-router = APIRouter(tags=[settings.api.v1.feedback.tag])
+router = APIRouter(tags=['Feedback'])
 
 
-@router.post(settings.api.v1.feedback.create_feedback, status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def submit_feedback(
         feedback: CreateFeedback,
         payload: Annotated[dict, Depends(get_current_user)],

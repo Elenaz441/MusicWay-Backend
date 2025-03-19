@@ -2,6 +2,7 @@ from .base import PyBaseModel
 from .task import TaskResultForTeacher
 
 from typing import List, Optional
+from uuid import UUID
 
 
 class UserResultTask(PyBaseModel):
@@ -10,3 +11,10 @@ class UserResultTask(PyBaseModel):
     patronymic: Optional[str] = None
     student_mark: Optional[int] = None
     tasks: List[TaskResultForTeacher]
+
+
+class UserInfo(PyBaseModel):
+    id: UUID
+    name: str
+    surname: str
+    patronymic: Optional[str] = None

@@ -6,13 +6,12 @@ from typing import Annotated, List
 from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, VariantForActiveTask
 from dependecies import get_current_user, get_material_service
 from exceptions import NotFoundException
-from config import settings
 
 
-router = APIRouter(tags=[settings.api.v1.material.tag])
+router = APIRouter(tags=['Study material'])
 
 
-@router.get(settings.api.v1.material.materials, response_model=List[ShortMaterialResponse])
+@router.get('', response_model=List[ShortMaterialResponse])
 async def get_materials(
         block_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -22,7 +21,7 @@ async def get_materials(
     return await material_service.get_materials_by_block(block_id)
 
 
-@router.get(settings.api.v1.material.video, response_model=MaterialVideoResponse)
+@router.get('/{material_id}/video', response_model=MaterialVideoResponse)
 async def get_material_video(
         material_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -34,7 +33,7 @@ async def get_material_video(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get(settings.api.v1.material.text, response_model=MaterialTextResponse)
+@router.get('/{material_id}/text', response_model=MaterialTextResponse)
 async def get_material_text(
         material_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -46,7 +45,7 @@ async def get_material_text(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get(settings.api.v1.material.tasks, response_model=List[VariantForActiveTask])
+@router.get('/{material_id}/tasks', response_model=List[VariantForActiveTask])
 async def get_material_tasks(
         material_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -58,7 +57,7 @@ async def get_material_tasks(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get(settings.api.v1.material.search, response_model=List[ShortMaterialResponse])
+@router.get('/search', response_model=List[ShortMaterialResponse])
 async def get_materials(
         query: str,
         payload: Annotated[dict, Depends(get_current_user)],

@@ -3,16 +3,25 @@ from uuid import UUID
 
 from services import TaskService
 from typing import Annotated
-from schemas import TaskResponse
+from schemas import TaskResponse, VariantForCreateTask
 from dependecies import get_current_user, get_task_service
-from config import settings
 from exceptions import NotFoundException
 
 
-router = APIRouter(tags=[settings.api.v1.task.tag])
+router = APIRouter(tags=['Task'])
 
 
-@router.get(settings.api.v1.task.get_by_id, response_model=TaskResponse)
+@router.post('', response_model=UUID)
+async def create_task(
+        data: VariantForCreateTask,
+        payload: Annotated[dict, Depends(get_current_user)],
+        task_service: Annotated[TaskService, Depends(get_task_service)]
+):
+    """Создание упражнения для тренажёра."""
+    return await task_service.create_task(data)
+
+
+@router.get('/{task_id}', response_model=TaskResponse)
 async def get_task_by_id(
         task_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -25,7 +34,7 @@ async def get_task_by_id(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get(settings.api.v1.task.get_by_material, response_model=TaskResponse)
+@router.get('/{material_id}/{variant_id}/{task_number}', response_model=TaskResponse)
 async def get_task_by_material(
         material_id: UUID,
         variant_id: UUID,
@@ -46,7 +55,7 @@ async def get_task_by_material(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get(settings.api.v1.task.get_by_homework, response_model=TaskResponse)
+@router.get('/{homework_id}/{task_number}', response_model=TaskResponse)
 async def get_task_by_homework(
         homework_id: UUID,
         task_number: int,

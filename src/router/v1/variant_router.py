@@ -6,13 +6,12 @@ from typing import Annotated
 from schemas import ShortVariantResponse, VariantResponse
 from dependecies import get_current_user, get_variant_service
 from exceptions import NotFoundException
-from config import settings
 
 
-router = APIRouter(tags=[settings.api.v1.variant.tag])
+router = APIRouter(tags=['Variant'])
 
 
-@router.get(settings.api.v1.variant.variants, response_model=list[ShortVariantResponse])
+@router.get('', response_model=list[ShortVariantResponse])
 async def get_variants(
         block_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],
@@ -22,7 +21,7 @@ async def get_variants(
     return await variant_service.get_variants_by_block(block_id)
 
 
-@router.get(settings.api.v1.variant.variant, response_model=VariantResponse)
+@router.get('/{variant_id}', response_model=VariantResponse)
 async def get_variant(
         variant_id: UUID,
         payload: Annotated[dict, Depends(get_current_user)],

@@ -5,7 +5,8 @@ __all__ = (
     'FeedbackService',
     'VariantService',
     'TaskService',
-    'HomeworkService'
+    'HomeworkService',
+    'ClassService'
 )
 
 from .auth_service import AuthService
@@ -15,3 +16,4 @@ from .feedback_service import FeedbackService
 from .variant_sevice import VariantService
 from .task_service import TaskService
 from .homework_service import HomeworkService
+from .class_service import ClassService

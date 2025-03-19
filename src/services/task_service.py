@@ -1,9 +1,7 @@
-from repositories import TaskRepository, VariantRepository, HomeworkTaskRepository
+from repositories import TaskRepository, VariantRepository, HomeworkTaskRepository, TaskTypeRepository
 from uuid import UUID
-from typing import List
 from exceptions import NotFoundException
-from schemas import TaskResponse
-from models import Variant, HomeworkTask
+from schemas import TaskResponse, VariantForCreateTask
 
 
 class TaskService:
@@ -13,11 +11,13 @@ class TaskService:
             self,
             task_repo: TaskRepository,
             variant_repo: VariantRepository,
-            hw_task_repo: HomeworkTaskRepository
+            hw_task_repo: HomeworkTaskRepository,
+            task_type_repo: TaskTypeRepository,
     ):
         self.task_repo = task_repo
         self.variant_repo = variant_repo
         self.hw_task_repo = hw_task_repo
+        self.task_type_repo = task_type_repo
 
     async def get_task(self, role: str, **filter_by) -> TaskResponse:
         """Получает упражнение."""
@@ -60,3 +60,23 @@ class TaskService:
             description=description
         )
         return task
+
+    async def create_task(self, data: VariantForCreateTask) -> UUID:
+        """Создание упражнения для тренажёра"""
+        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': data.id})
+        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+        task = {  # TODO добавить отправку на сервера
+            'condition': 'Условие1',
+            'content': {},
+            'answer': {},
+            'max_mark': 5
+        }
+
+        new_task = {  # TODO (поменять?)
+            'condition': task['condition'],
+            'content': task['content'],
+            'answer': task['answer'],
+            'max_mark': task['max_mark'],
+            'variant_id': data.id,
+        }
+        return await self.task_repo.add_one(new_task)
