@@ -3,7 +3,7 @@ from uuid import UUID
 
 from services import TaskService
 from typing import Annotated
-from schemas import TaskResponse, VariantForCreateTask
+from schemas import TaskResponse, VariantForCreateTask, TaskAnswer, TaskSubmit
 from dependecies import get_current_user, get_task_service
 from exceptions import NotFoundException
 
@@ -71,3 +71,17 @@ async def get_task_by_homework(
         )
     except NotFoundException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
+
+
+@router.post('/{task_id}/check', response_model=TaskAnswer)
+async def check_task(
+        task_id: UUID,
+        data: TaskSubmit,
+        payload: Annotated[dict, Depends(get_current_user)],
+        task_service: Annotated[TaskService, Depends(get_task_service)]
+):
+    try:
+        return await task_service.check_task(task_id, data)
+    except NotFoundException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
+

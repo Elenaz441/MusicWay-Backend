@@ -1,7 +1,7 @@
 from repositories import TaskRepository, VariantRepository, HomeworkTaskRepository, TaskTypeRepository
 from uuid import UUID
 from exceptions import NotFoundException
-from schemas import TaskResponse, VariantForCreateTask
+from schemas import TaskResponse, VariantForCreateTask, TaskSubmit, TaskAnswer
 
 
 class TaskService:
@@ -37,7 +37,7 @@ class TaskService:
         )
         return task
 
-    async def get_task_by_homework(self, role: str,  homework_id: UUID, task_number: int) -> TaskResponse:
+    async def get_task_by_homework(self, role: str, homework_id: UUID, task_number: int) -> TaskResponse:
         """Получает упражнение в домашнем задании."""
         task_ids = await self.hw_task_repo.find_all(['task_id'], filter_by={'homework_id': homework_id})
         if not task_ids:
@@ -63,7 +63,7 @@ class TaskService:
 
     async def create_task(self, data: VariantForCreateTask) -> UUID:
         """Создание упражнения для тренажёра"""
-        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': data.id})
+        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': data.variant_id})
         task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
         task = {  # TODO добавить отправку на сервера
             'condition': 'Условие1',
@@ -77,6 +77,21 @@ class TaskService:
             'content': task['content'],
             'answer': task['answer'],
             'max_mark': task['max_mark'],
-            'variant_id': data.id,
+            'variant_id': data.variant_id,
         }
         return await self.task_repo.add_one(new_task)
+
+    async def check_task(self, task_id: UUID, data: TaskSubmit) -> TaskAnswer:
+        """Проверка упражнения"""
+        task = await self.task_repo.find_one(
+            ['id', 'answer', 'is_study_task', 'variant_id'],
+            {'id': task_id}
+        )
+        if not task:
+            raise NotFoundException('task', 'id')
+        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
+        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+        is_right = True  # TODO отправка на сервер
+        if not task.is_study_task and data.delete_it:
+            await self.task_repo.delete_one(task_id)
+        return TaskAnswer(is_right=is_right, answer=task.answer)

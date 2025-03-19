@@ -35,5 +35,5 @@ class VariantForTeacher(VariantForActiveTask):
 
 
 class VariantForCreateTask(PyBaseModel):
-    id: UUID
+    variant_id: UUID
     settings: Dict[str, Any]

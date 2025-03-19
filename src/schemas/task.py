@@ -24,8 +24,15 @@ class TaskResultForTeacher(PyBaseModel):
 
 
 class TaskSubmit(PyBaseModel):
+    delete_it: bool
     check_data: Dict[str, Any]
 
 
-class TaskHomeworkSubmit(TaskSubmit):
+class TaskAnswer(PyBaseModel):
+    is_right: bool
+    answer: Dict[str, Any]
+
+
+class TaskHomeworkSubmit(PyBaseModel):
     task_id: UUID
+    check_data: Dict[str, Any]

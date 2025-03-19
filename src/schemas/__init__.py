@@ -15,6 +15,7 @@ __all__ = [
     'TaskSubmit',
     'TaskHomeworkSubmit',
     'TaskForLastHomework',
+    'TaskAnswer',
     'ShortActiveHomework',
     'ShortLastHomework',
     'ActiveHomework',
@@ -25,7 +26,7 @@ __all__ = [
     'VariantForCreateTask',
     'ShortClassResponse',
     'ClassResponse',
-    'ShortLastHWTeacher'
+    'ShortLastHWTeacher',
 ]
 
 from .auth import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
@@ -33,7 +34,7 @@ from .topic_block import TopicBlockResponse
 from .material import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
 from .feedback import CreateFeedback
 from .variant import ShortVariantResponse, VariantResponse, VariantForActiveTask, VariantForCreateTask
-from .task import TaskResponse, TaskSubmit, TaskHomeworkSubmit, TaskForLastHomework
+from .task import TaskResponse, TaskSubmit, TaskHomeworkSubmit, TaskForLastHomework, TaskAnswer
 from .homework import (
     ShortActiveHomework,
     ShortLastHomework,

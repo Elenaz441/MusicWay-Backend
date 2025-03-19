@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import List, Union
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
 from schemas import ShortActiveHomework, ShortLastHomework, ActiveHomework, LastHomework, TeacherHomework, \
-    CreateHomework, EditHomework
+    CreateHomework, EditHomework, TaskHomeworkSubmit
 
 
 class HomeworkService:
@@ -164,18 +164,18 @@ class HomeworkService:
         number = 1
 
         for variant in homework.variants:
-            task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': variant.id})
+            task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': variant.variant_id})
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
             tasks = [  # TODO добавить отправку на сервера
                 {
-                    'condition': 'Условие1',
+                    'condition': 'ДЗ Условие1',
                     'content': {},
                     'answer': {},
                     'max_mark': 5,
                     'query': 'м.2'
                 },
                 {
-                    'condition': 'Условие2',
+                    'condition': 'ДЗ Условие2',
                     'content': {},
                     'answer': {},
                     'max_mark': 5,
@@ -189,7 +189,7 @@ class HomeworkService:
                     'content': task['content'],
                     'answer': task['answer'],
                     'max_mark': task['max_mark'],
-                    'variant_id': variant.id,
+                    'variant_id': variant.variant_id,
                     'material_id': material_id[0].id,
                     'number': number
                 }
@@ -225,4 +225,30 @@ class HomeworkService:
         unique_task_ids = {task_id.task_id for task_id in task_ids}
         for task_id in unique_task_ids:
             await self.task_repo.delete_one(task_id)
+
+    async def submit_homework(
+            self,
+            homework_id: UUID,
+            tasks: List[TaskHomeworkSubmit],
+            user_id: UUID,
+            role: str
+    ) -> LastHomework:
+        """Отправка ДЗ на проверку"""
+        if role != 'Ученик':
+            raise NoRightsException()
+        homework = await self.homework_repo.find_one(['id'], {'id': homework_id})
+        if not homework:
+            raise NotFoundException('homework', 'homework_id')
+        for task_answer in tasks:
+            task = await self.task_repo.find_one(['id', 'variant_id'], {'id': task_answer.task_id})
+            task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
+            task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+            mark = 4  # TODO отправка на сервер
+            hw_task = await self.hw_task_repo.find_one(
+                ['id'],
+                {'homework_id': homework_id, 'student_id': user_id, 'task_id': task.id}
+            )
+            await self.hw_task_repo.edit_one(hw_task.id, {'mark': mark})
+        return await self.get_completed_homework(homework_id, user_id, role)
+
 

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from services import HomeworkService
 from typing import Annotated, List, Union
-from schemas import ShortActiveHomework, ShortLastHomework, ActiveHomework, LastHomework, TeacherHomework, CreateHomework, EditHomework
+from schemas import ShortActiveHomework, ShortLastHomework, ActiveHomework, LastHomework, TeacherHomework, CreateHomework, EditHomework, TaskHomeworkSubmit
 from dependecies import get_current_user, get_homework_service
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
 
@@ -112,4 +112,20 @@ async def delete_homework(
         return await homework_service.delete_homework(homework_id, payload['role'])
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
+
+
+@router.post('/{homework_id}/submit', response_model=LastHomework)
+async def submit_homework(
+        homework_id: UUID,
+        data: List[TaskHomeworkSubmit],
+        payload: Annotated[dict, Depends(get_current_user)],
+        homework_service: Annotated[HomeworkService, Depends(get_homework_service)]
+):
+    """Отправка домашнего задания на проверку"""
+    try:
+        return await homework_service.submit_homework(homework_id, data, UUID(payload['sub']), payload['role'])
+    except NoRightsException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
+    except NotFoundException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
