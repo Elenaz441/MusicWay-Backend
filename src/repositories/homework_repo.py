@@ -1,9 +1,10 @@
 from .sqlalchemy_repo import SQLAlchemyRepository
-from models import Homework, Task, HomeworkTask, Variant, TopicBlock, User
-from typing import Sequence, Optional
-from sqlalchemy import select, func, between, exists, RowMapping
+from models import Homework, Task, HomeworkTask, Variant, TopicBlock, User, StudentClass
+from typing import Sequence, Optional, Dict, Any
+from sqlalchemy import select, func, between, exists, RowMapping, Integer
 from sqlalchemy.sql.functions import coalesce
 from uuid import UUID
+from datetime import datetime, timedelta
 
 
 class HomeworkRepository(SQLAlchemyRepository):
@@ -57,21 +58,26 @@ class HomeworkRepository(SQLAlchemyRepository):
         res = await self.db.execute(stmt)
         return res.mappings().all()
 
-    async def find_all_completed(self, class_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
+    async def find_all_completed(self, filter_by: Dict[str, Any]) -> Sequence[RowMapping]:
         """Получает завершенные домашние задания по классу"""
-        filter_by = [class_id == Homework.class_id]
-        if student_id:
-            filter_by.append(
-                (Homework.end_date < func.now())
-                | ~exists().where(
-                    HomeworkTask.homework_id == Homework.id,
-                    student_id == HomeworkTask.student_id,
-                    HomeworkTask.mark.is_(None)
-                ).correlate(Homework)
-            )
-            filter_by.append(student_id == HomeworkTask.student_id)
-        else:
-            filter_by.append(Homework.end_date < func.now())
+        filters = []
+        for key, value in filter_by.items():
+            if key == 'student_id':
+                filters.append(
+                    (Homework.end_date < func.now())
+                    | ~exists().where(
+                        HomeworkTask.homework_id == Homework.id,
+                        value == HomeworkTask.student_id,
+                        HomeworkTask.mark.is_(None)
+                    ).correlate(Homework)
+                )
+                filters.append(value == HomeworkTask.student_id)
+            else:
+                column = getattr(self.model, key)
+                filters.append(column == value)
+        if 'student_id' not in filter_by.keys():
+            filters.append(Homework.end_date < func.now())
+
         stmt = (
             select(
                 Homework.id, Homework.topic,
@@ -80,7 +86,7 @@ class HomeworkRepository(SQLAlchemyRepository):
             )
             .join(HomeworkTask, HomeworkTask.homework_id == Homework.id)
             .join(Task, HomeworkTask.task_id == Task.id)
-            .where(*filter_by)
+            .where(*filters)
             .group_by(Homework.id)
         )
 
@@ -103,10 +109,12 @@ class HomeworkRepository(SQLAlchemyRepository):
         res = await self.db.execute(stmt)
         return res.scalar()
 
-    async def get_marks(self, homework_id: UUID, student_id: UUID) -> Sequence[RowMapping]:
-        """Получает все задания и оценки в ДЗ для ученика."""
+    async def get_marks(self, homework_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
+        """Получает все задания и оценки в ДЗ."""
 
-        filter_by = [homework_id == HomeworkTask.homework_id, student_id == HomeworkTask.student_id]
+        filter_by = [homework_id == HomeworkTask.homework_id]
+        if student_id:
+            filter_by.append(student_id == HomeworkTask.student_id)
 
         stmt = (
             select(
@@ -155,6 +163,37 @@ class HomeworkRepository(SQLAlchemyRepository):
             .join(Task, HomeworkTask.task_id == Task.id)
             .join(Variant, Task.variant_id == Variant.id)
             .where(homework_id == HomeworkTask.homework_id)
+        )
+
+        res = await self.db.execute(stmt)
+        return res.mappings().all()
+
+    async def get_statistic(self, class_id: UUID) -> Sequence[RowMapping]:
+        """Получает статистику по завершённым ДЗ для класса."""
+        three_months_ago = datetime.now().date() - timedelta(days=90)
+
+        stmt = (
+            select(
+                Homework.id,
+                Homework.topic,
+                func.round(
+                    (
+                        func.coalesce(func.sum(HomeworkTask.mark), 0) * 100 /
+                        (func.sum(Task.max_mark))
+                    ),
+                    0
+                ).cast(Integer).label('success_rate')
+            )
+            .join(StudentClass, StudentClass.class_id == Homework.class_id)
+            .join(HomeworkTask, HomeworkTask.homework_id == Homework.id, isouter=True)
+            .join(Task, HomeworkTask.task_id == Task.id, isouter=True)
+            .where(
+                class_id == Homework.class_id,
+                Homework.end_date >= three_months_ago,
+                Homework.end_date < datetime.now().date()
+            )
+            .group_by(Homework.id)
+            .order_by(Homework.end_date.desc())
         )
 
         res = await self.db.execute(stmt)

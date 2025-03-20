@@ -30,7 +30,8 @@ from services import (
     VariantService,
     TaskService,
     HomeworkService,
-    ClassService
+    ClassService,
+    UserService
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
@@ -60,7 +61,7 @@ async def get_topic_block_service(
     db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> TopicBlockService:
     """Глобальная зависимость для TopicBlockService."""
-    return TopicBlockService(TopicBlockRepository(db))
+    return TopicBlockService(TopicBlockRepository(db), StudentClassRepository(db), HomeworkRepository(db))
 
 
 async def get_material_service(
@@ -109,4 +110,12 @@ async def get_homework_service(
 async def get_class_service(
         db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> ClassService:
+    """Глобальная зависимость ClassService."""
     return ClassService(ClassRepository(db), StudentClassRepository(db), UserRepository(db), HomeworkRepository(db))
+
+
+async def get_user_service(
+        db: Annotated[AsyncSession, Depends(get_async_session)]
+) -> UserService:
+    """Глобальная зависимость UserService."""
+    return UserService(TopicBlockRepository(db), StudentClassRepository(db), HomeworkRepository(db))

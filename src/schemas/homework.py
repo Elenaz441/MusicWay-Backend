@@ -1,5 +1,5 @@
 from .base import PyBaseModel
-from .variant import VariantForActiveTask, VariantForLastTask, VariantForTeacher, VariantForCreateTask
+from .variant import VariantForActiveTask, VariantForLastTask, VariantForCreateTask
 from .material import ShortMaterialResponse
 from .user import UserResultTask
 from datetime import date
@@ -56,3 +56,9 @@ class EditHomework(PyBaseModel):
     topic: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+
+
+class HomeworkStatistic(PyBaseModel):
+    id: UUID
+    topic: str
+    success_rate: int

@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import List, Union
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
 from schemas import ShortActiveHomework, ShortLastHomework, ActiveHomework, LastHomework, TeacherHomework, \
-    CreateHomework, EditHomework, TaskHomeworkSubmit
+    CreateHomework, EditHomework, TaskHomeworkSubmit, VariantStatistic
 
 
 class HomeworkService:
@@ -44,7 +44,7 @@ class HomeworkService:
         if active:
             tasks = await self.homework_repo.find_all_active(class_id.class_id, user_id)
             return [ShortActiveHomework.model_validate(task) for task in tasks]
-        tasks = await self.homework_repo.find_all_completed(class_id.class_id, user_id)
+        tasks = await self.homework_repo.find_all_completed({'class_id': class_id.class_id, 'student_id': user_id})
         return [ShortLastHomework.model_validate(task) for task in tasks]
 
     async def get_active_homework(self, homework_id: UUID, user_id: UUID, role: str) -> ActiveHomework:
@@ -250,5 +250,25 @@ class HomeworkService:
             )
             await self.hw_task_repo.edit_one(hw_task.id, {'mark': mark})
         return await self.get_completed_homework(homework_id, user_id, role)
+
+    async def get_statistic(self, homework_id: UUID, role: str) -> List[VariantStatistic]:
+        if role != 'Преподаватель':
+            raise NoRightsException()
+        result = {}
+        hw_tasks = await self.homework_repo.get_marks(homework_id)
+        for task in hw_tasks:
+            key = task['name']
+            if key not in result:
+                result[key] = {'name': key, 'student_mark': 0, 'max_mark': 0}
+            result[key]['student_mark'] += task['student_mark']
+            result[key]['max_mark'] += task['max_mark']
+
+        return [
+            VariantStatistic(
+                name=r['name'],
+                success_rate=r['student_mark'] * 100 // r['max_mark']
+            )
+            for r in result.values()
+        ]
 
 

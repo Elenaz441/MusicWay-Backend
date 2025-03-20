@@ -3,7 +3,17 @@ from uuid import UUID
 
 from services import HomeworkService
 from typing import Annotated, List, Union
-from schemas import ShortActiveHomework, ShortLastHomework, ActiveHomework, LastHomework, TeacherHomework, CreateHomework, EditHomework, TaskHomeworkSubmit
+from schemas import (
+    ShortActiveHomework,
+    ShortLastHomework,
+    ActiveHomework,
+    LastHomework,
+    TeacherHomework,
+    CreateHomework,
+    EditHomework,
+    TaskHomeworkSubmit,
+    VariantStatistic
+)
 from dependecies import get_current_user, get_homework_service
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
 
@@ -128,4 +138,18 @@ async def submit_homework(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
+
+
+@router.get('/{homework_id}/statistic', response_model=List[VariantStatistic])
+async def get_homework_statistic(
+        homework_id: UUID,
+        payload: Annotated[dict, Depends(get_current_user)],
+        homework_service: Annotated[HomeworkService, Depends(get_homework_service)]
+):
+    """Получение успешности выполнения задания по вариантам упражнения"""
+    try:
+        return await homework_service.get_statistic(homework_id, payload['role'])
+    except NoRightsException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
+
 

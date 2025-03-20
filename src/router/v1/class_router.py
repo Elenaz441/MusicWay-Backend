@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from services import ClassService
 from typing import Annotated, List
 from uuid import UUID
-from schemas import ShortClassResponse, ClassResponse, ShortLastHWTeacher
+from schemas import ShortClassResponse, ClassResponse, ShortLastHWTeacher, HomeworkStatistic
 from dependecies import get_class_service, get_current_user
 from exceptions import NoRightsException, NotFoundException
 
@@ -50,3 +50,16 @@ async def get_class_last_homework(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
+
+
+@router.get('/{class_id}/statistic', response_model=List[HomeworkStatistic])
+async def get_class_statistic(
+        class_id: UUID,
+        payload: Annotated[dict, Depends(get_current_user)],
+        class_service: Annotated[ClassService, Depends(get_class_service)]
+):
+    """Получает статистику выполнения домашних заданий за три месяца"""
+    try:
+        return await class_service.get_statistic(class_id, payload['role'])
+    except NoRightsException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))

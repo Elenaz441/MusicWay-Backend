@@ -27,13 +27,16 @@ __all__ = [
     'ShortClassResponse',
     'ClassResponse',
     'ShortLastHWTeacher',
+    'UserStatistic',
+    'VariantStatistic',
+    'HomeworkStatistic'
 ]
 
 from .auth import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
 from .topic_block import TopicBlockResponse
 from .material import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse
 from .feedback import CreateFeedback
-from .variant import ShortVariantResponse, VariantResponse, VariantForActiveTask, VariantForCreateTask
+from .variant import ShortVariantResponse, VariantResponse, VariantForActiveTask, VariantForCreateTask, VariantStatistic
 from .task import TaskResponse, TaskSubmit, TaskHomeworkSubmit, TaskForLastHomework, TaskAnswer
 from .homework import (
     ShortActiveHomework,
@@ -43,6 +46,8 @@ from .homework import (
     EditHomework,
     TeacherHomework,
     CreateHomework,
-    ShortLastHWTeacher
+    ShortLastHWTeacher,
+    HomeworkStatistic
 )
 from .learning_class import ShortClassResponse, ClassResponse
+from .user import UserStatistic

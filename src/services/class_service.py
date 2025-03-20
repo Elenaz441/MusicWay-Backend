@@ -1,12 +1,12 @@
 from repositories import ClassRepository, StudentClassRepository, UserRepository, HomeworkRepository
-from schemas import ShortClassResponse, ClassResponse, ShortLastHWTeacher
+from schemas import ShortClassResponse, ClassResponse, ShortLastHWTeacher, HomeworkStatistic
 from exceptions import NoRightsException, NotFoundException
 from typing import List
 from uuid import UUID
 
 
 class ClassService:
-    """Сервис для работы с разделами."""
+    """Сервис для работы с классами."""
     def __init__(
             self,
             class_repo: ClassRepository,
@@ -63,7 +63,14 @@ class ClassService:
             raise NotFoundException('class', 'id')
         if learning_class.teacher_id != teacher_id:
             raise NoRightsException()
-        tasks = await self.homework_repo.find_all_completed(class_id)
+        tasks = await self.homework_repo.find_all_completed({'class_id': class_id})
         return [ShortLastHWTeacher.model_validate(task) for task in tasks]
+
+    async def get_statistic(self, class_id: UUID, role: str) -> List[HomeworkStatistic]:
+        """Получает стаитстику выполнения ДЗ за последние три месяца"""
+        if role != 'Преподаватель':
+            raise NoRightsException()
+        statistics = await self.homework_repo.get_statistic(class_id)
+        return [HomeworkStatistic.model_validate(statistic) for statistic in statistics]
 
 

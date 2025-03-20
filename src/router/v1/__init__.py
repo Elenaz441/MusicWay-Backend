@@ -11,11 +11,12 @@ from .variant_router import router as variant_router
 from .task_router import router as task_router
 from .homework_router import router as homework_router
 from .class_router import router as class_router
+from .user_router import router as user_router
 
 router = APIRouter(
     prefix=settings.api.v1.prefix,
 )
-# router.include_router(user_router, prefix=settings.api.v1.users,)
+router.include_router(user_router, prefix=settings.api.v1.users)
 router.include_router(auth_router, prefix=settings.api.v1.auth)
 router.include_router(topic_block_router, prefix=settings.api.v1.topic_block)
 router.include_router(material_router, prefix=settings.api.v1.material)

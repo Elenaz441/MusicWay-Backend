@@ -30,10 +30,11 @@ class VariantForLastTask(PyBaseModel):
     tasks: List[TaskForLastHomework]
 
 
-class VariantForTeacher(VariantForActiveTask):
-    max_mark: int
-
-
 class VariantForCreateTask(PyBaseModel):
     variant_id: UUID
     settings: Dict[str, Any]
+
+
+class VariantStatistic(PyBaseModel):
+    name: str
+    success_rate: int
