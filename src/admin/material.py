@@ -7,8 +7,8 @@ class MaterialAdmin(ModelView, model=StudyMaterial):
     name = 'Учебный материал'
     name_plural = 'Учебные материалы'
     column_list = [StudyMaterial.name, StudyMaterial.block]
-    column_details_list = [StudyMaterial.name, StudyMaterial.block, StudyMaterial.video_url, StudyMaterial.text]
-    form_columns = [StudyMaterial.name, StudyMaterial.block, StudyMaterial.video_url, StudyMaterial.text]
+    column_details_list = [StudyMaterial.name, StudyMaterial.block, StudyMaterial.number, StudyMaterial.video_url, StudyMaterial.text]
+    form_columns = [StudyMaterial.name, StudyMaterial.block, StudyMaterial.number, StudyMaterial.video_url, StudyMaterial.text]
     column_labels = {
         StudyMaterial.name: 'Наименование',
         StudyMaterial.block: 'Раздел',

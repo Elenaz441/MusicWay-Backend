@@ -14,7 +14,11 @@ class MaterialService:
 
     async def get_materials_by_block(self, block_id: UUID) -> List[ShortMaterialResponse]:
         """Получает материалы по разделу."""
-        materials = await self.material_repo.find_all(['id', 'name'], filter_by={'block_id': block_id})
+        materials = await self.material_repo.find_all(
+            ['id', 'name'],
+            filter_by={'block_id': block_id},
+            order_by='number'
+        )
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
 

@@ -26,7 +26,7 @@ async def get_topic_block_statistic(
         topic_block_service: Annotated[TopicBlockService, Depends(get_topic_block_service)]
 ):
     try:
-        return await topic_block_service.get_statistic(block_id, payload['sub'], payload['role'])
+        return await topic_block_service.get_statistic(block_id, UUID(payload['sub']), payload['role'])
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:

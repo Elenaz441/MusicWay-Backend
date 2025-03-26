@@ -1,9 +1,8 @@
 from sqladmin import ModelView
-from sqlalchemy import Select, select
-from sqlalchemy.orm import join
-from starlette.requests import Request
 
-from models import User, Role
+from models import User
+from utils import generate_valid_string, hash_password
+from dependecies import get_email_service
 
 
 class UserAdmin(ModelView, model=User):
@@ -13,7 +12,7 @@ class UserAdmin(ModelView, model=User):
     column_details_list = [User.email, User.surname, User.name, User.patronymic,
                            User.birthdate, User.is_first_login, User.role]
     form_columns = [User.email, User.surname, User.name, User.patronymic,
-                    User.birthdate, User.role, User.hashed_password]
+                    User.birthdate, User.role]
     column_searchable_list = [User.surname, User.name, User.patronymic, User.birthdate, User.role]
     column_labels = {
         User.email: 'Почта',
@@ -22,17 +21,14 @@ class UserAdmin(ModelView, model=User):
         User.name: 'Имя',
         User.patronymic: 'Отчество',
         User.birthdate: 'Дата рождения',
-        User.is_first_login: 'Первая регистрация',
+        User.is_first_login: 'Первая авторизация',
         User.role: 'Роль'
     }
 
-    # def list_query(self, request: Request) -> Select:
-    #     return select(User).join(Role, User.role_id == Role.id)
-
-#  select(User)
-#  .select_from(join(User, Address, User.addresses))
-#  .filter(Address.email_address == "foo@bar.com")
-
-# select(Order.id, Order.product, Customer.name).select_from(
-#     Order).join(Customer, Order.customer_id == Customer.id)
-
+    async def on_model_change(self, data, model, is_created, request) -> None:
+        if is_created:
+            email_service = await get_email_service()
+            password = generate_valid_string()
+            await email_service.send_welcome_message(data['email'], {'password': password})
+            print(password)
+            data['hashed_password'] = hash_password(password)

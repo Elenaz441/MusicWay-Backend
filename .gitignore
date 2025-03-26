@@ -32,3 +32,5 @@ archive.zip
 .venv
 *.env
 files
+
+*.log

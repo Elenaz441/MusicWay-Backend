@@ -7,7 +7,8 @@ __all__ = (
     'TaskService',
     'HomeworkService',
     'ClassService',
-    'UserService'
+    'UserService',
+    'EmailService'
 )
 
 from .auth_service import AuthService
@@ -19,3 +20,4 @@ from .task_service import TaskService
 from .homework_service import HomeworkService
 from .class_service import ClassService
 from .user_service import UserService
+from .email_service import EmailService

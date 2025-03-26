@@ -16,7 +16,7 @@ class StudyMaterial(Base):
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
     block_id: Mapped[UUID] = mapped_column(ForeignKey(TopicBlock.id, ondelete='RESTRICT'), nullable=False)
     name: Mapped[str] = mapped_column(String(length=100), unique=True, nullable=False)
-    video_url: Mapped[str] = mapped_column(FileType, nullable=False)
+    video_url: Mapped[str] = mapped_column(FileType('materials'), nullable=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
 

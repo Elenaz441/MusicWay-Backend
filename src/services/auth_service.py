@@ -1,5 +1,4 @@
 import redis
-import bcrypt
 import jwt
 from uuid import UUID
 from datetime import datetime, timedelta, timezone
@@ -7,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from repositories import UserRepository, RoleRepository
 from schemas import UserRegister, TokenResponse
 from config import settings
+from utils import  hash_password, verify_password
 from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException, InvalidTokenException
 
 
@@ -16,15 +16,6 @@ class AuthService:
         self.user_repo = user_repo
         self.role_repo = role_repo
         self.redis = redis_client
-
-    def hash_password(self, password: str) -> str:
-        """Хеширование пароля перед сохранением."""
-        salt = bcrypt.gensalt()
-        return bcrypt.hashpw(password.encode(), salt).decode()
-
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """Проверка введенного пароля с хешем из БД."""
-        return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
     def generate_jwt(self, data: dict, expires_delta: timedelta) -> str:
         """Генерация JWT-токена."""
@@ -49,7 +40,7 @@ class AuthService:
         if existing_user:
             raise AlreadyExistsException('пользователь', 'email')
 
-        hashed_password = self.hash_password(user_data.password)
+        hashed_password = hash_password(user_data.password)
         role = await self.role_repo.find_one(['id'], {'name': user_data.role})
         new_user = {
             'email': user_data.email,
@@ -68,7 +59,7 @@ class AuthService:
             ['id', 'email', 'role_id', 'hashed_password', 'is_first_login'],
             {'email': email}
         )
-        if not user or not self.verify_password(password, user.hashed_password):
+        if not user or not verify_password(password, user.hashed_password):
             raise IncorrectDataException('Неверный email или пароль')
 
         role = await self.role_repo.find_one(['name'], {'id': user.role_id})
@@ -96,13 +87,12 @@ class AuthService:
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
-    async def change_password(self, email: str, role_name: str, new_password: str):
+    async def change_password(self, user_id: UUID, role_name: str, new_password: str):
         """Смена пароля преподавателя при первой авторизации"""
-        if role_name != 'Преподаватель':
+        if role_name not in ['Преподаватель', 'Админ']:
             raise NoRightsException()
-        user = await self.user_repo.find_one(['id'], {'email': email})
-        hashed_password = self.hash_password(new_password)
-        await self.user_repo.edit_one(user.id, {'hashed_password': hashed_password})
+        hashed_password = hash_password(new_password)
+        await self.user_repo.edit_one(user_id, {'hashed_password': hashed_password})
 
     async def decode_jwt(self, token: str):
         """Декодирует JWT, проверяет срок действия и наличие в blacklist."""

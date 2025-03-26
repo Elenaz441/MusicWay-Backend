@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from services import AuthService
 from typing import Annotated
@@ -79,7 +81,7 @@ async def change_password(
 ):
     """Смена пароля"""
     try:
-        await auth_service.change_password(payload['sub'], payload['role'], data.new_password)
+        await auth_service.change_password(UUID(payload['sub']), payload['role'], data.new_password)
         return {'message': 'Пароль успешно изменён.'}
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))

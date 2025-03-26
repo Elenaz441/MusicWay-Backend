@@ -13,7 +13,7 @@ class TopicBlock(Base):
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    image_url: Mapped[str] = mapped_column(FileType, nullable=False)
+    image_url: Mapped[str] = mapped_column(FileType('blocks'), nullable=False)
 
     materials: Mapped[list['StudyMaterial']] = relationship(back_populates='block')
     task_types: Mapped[list['TaskType']] = relationship(back_populates='block')

@@ -4,6 +4,7 @@ from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
 )
+from pathlib import Path
 
 
 class RunConfig(BaseModel):
@@ -55,8 +56,23 @@ class AuthConfig(BaseModel):
     algorithm: str = 'HS256'
 
 
+class EmailSenderConfig(BaseModel):
+    host: str
+    user: str
+    password: str
+    port: int
+    template_folder: str = Path(__file__).parent / 'templates/emails'
+
+
 class FrontendConfig(BaseModel):
     url: str
+
+
+class S3Config(BaseModel):
+    key_id: str
+    secret: str
+    bucket_name: str
+    endpoint_url: str
 
 
 class Settings(BaseSettings):
@@ -70,11 +86,12 @@ class Settings(BaseSettings):
     db: DatabaseConfig
     redis: RedisConfig
     auth: AuthConfig
+    email_sender: EmailSenderConfig
     front: FrontendConfig
+    s3: S3Config
 
 
 settings = Settings()
 
-from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 

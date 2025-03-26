@@ -17,8 +17,8 @@ class Variant(Base):
     name: Mapped[str] = mapped_column(String(length=100), unique=True, nullable=False)
     student_description: Mapped[str] = mapped_column(Text, nullable=False)
     teacher_description: Mapped[str] = mapped_column(Text, nullable=False)
-    image_url: Mapped[str] = mapped_column(FileType, nullable=False)
-    demo_url: Mapped[str] = mapped_column(FileType, nullable=False)
+    image_url: Mapped[str] = mapped_column(FileType('variants'), nullable=False)
+    demo_url: Mapped[str] = mapped_column(FileType('variants'), nullable=False)
 
     task_type: Mapped[TaskType] = relationship(back_populates='variants')
     tasks: Mapped[list['Task']] = relationship(back_populates='variant')

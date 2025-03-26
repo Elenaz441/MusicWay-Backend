@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from services import UserService
@@ -16,7 +18,7 @@ async def get_statistic(
 ):
     """Получение статистики ученика."""
     try:
-        return await user_service.get_statistic(payload['sub'], payload['role'])
+        return await user_service.get_statistic(UUID(payload['sub']), payload['role'])
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:

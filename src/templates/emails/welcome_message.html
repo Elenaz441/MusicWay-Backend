@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добро пожаловать в MusicWay!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .content {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .password-box {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d9534f;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            font-size: 14px;
+            color: #777;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="header">Добро пожаловать в MusicWay!</p>
+
+        <div class="content">
+            <p>Здравствуйте,</p>
+            <p>Вы были зарегистрированы в образовательной платформе <strong>MusicWay</strong>.</p>
+            <p>Для входа используйте следующий временный пароль:</p>
+
+            <div class="password-box">{{ password }}</div>
+
+            <p><strong>После первого входа вам необходимо сменить пароль!</strong></p>
+        </div>
+
+        <p class="footer">Если вы не регистрировались в MusicWay, просто проигнорируйте это письмо.</p>
+    </div>
+</body>
+</html>

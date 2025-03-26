@@ -31,7 +31,8 @@ from services import (
     TaskService,
     HomeworkService,
     ClassService,
-    UserService
+    UserService,
+    EmailService
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.auth.token_url)
@@ -119,3 +120,8 @@ async def get_user_service(
 ) -> UserService:
     """Глобальная зависимость UserService."""
     return UserService(TopicBlockRepository(db), StudentClassRepository(db), HomeworkRepository(db))
+
+
+async def get_email_service() -> EmailService:
+    """Глобальная зависимость EmailService."""
+    return EmailService()

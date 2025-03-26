@@ -56,7 +56,7 @@ async def get_active_homework(
 ):
     """Получение активного домашнего задания"""
     try:
-        return await homework_service.get_active_homework(homework_id, payload['sub'], payload['role'])
+        return await homework_service.get_active_homework(homework_id, UUID(payload['sub']), payload['role'])
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:
@@ -73,7 +73,7 @@ async def get_completed_homework(
 ):
     """Получение завершенного домашнего задания"""
     try:
-        return await homework_service.get_completed_homework(homework_id, payload['sub'], payload['role'])
+        return await homework_service.get_completed_homework(homework_id, UUID(payload['sub']), payload['role'])
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:

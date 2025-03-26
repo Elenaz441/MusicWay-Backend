@@ -4,7 +4,8 @@ __all__ = (
     'TopicBlockAdmin',
     'FeedbackAdmin',
     'LearningClassAdmin',
-    'StudentClassAdmin'
+    'StudentClassAdmin',
+    'AdminAuth'
 )
 
 from .user import UserAdmin
@@ -13,3 +14,4 @@ from .topic_block import TopicBlockAdmin
 from .feedback import FeedbackAdmin
 from .learning_class import LearningClassAdmin
 from .student_class import StudentClassAdmin
+from .authentication import AdminAuth

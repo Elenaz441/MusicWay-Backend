@@ -27,7 +27,7 @@ class MaterialRepository(SQLAlchemyRepository):
             for key, value in filter_by.items():
                 column = getattr(self.model, key)
                 if key == 'search_vector':
-                    filters.append(column.op('@@')(func.to_tsquery('russian', value)))
+                    filters.append(column.op('@@')(func.plainto_tsquery('russian', value)))
                 else:
                     filters.append(column == value)
             stmt = stmt.where(*filters)
