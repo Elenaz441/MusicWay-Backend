@@ -8,19 +8,13 @@ from pydantic_settings import (
 
 class RunConfig(BaseModel):
     host: str = '127.0.0.1'
-    port: int = 8000
-
-
-class AuthApiPrefix(BaseModel):
-    prefix: str = '/auth'
-    register: str = '/register'
-    refresh: str = '/refresh'
+    port: int = 8001
 
 
 class ApiV1Prefix(BaseModel):
     prefix: str = '/v1'
-    users: str = '/users'
-    auth: AuthApiPrefix = AuthApiPrefix()
+    settings: str = '/settings'
+    tasks: str = '/tasks'
 
 
 class ApiPrefix(BaseModel):
@@ -40,16 +34,7 @@ class DatabaseConfig(BaseModel):
     }
 
 
-class AuthConfig(BaseModel):
-    secret_key: str
-    token_url: str = '/api/v1/auth/login'
-    lifetime_seconds_access: int = 3600
-    lifetime_seconds_refresh: int = 86400
-    auth_by_email_chars_count: int = 6
-    lifetime_seconds_code: int = 300
-
-
-class FrontendConfig(BaseModel):
+class MainServerConfig(BaseModel):
     url: str
 
 
@@ -62,12 +47,8 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
     db: DatabaseConfig
-    auth: AuthConfig
-    front: FrontendConfig
+    main: MainServerConfig
 
 
 settings = Settings()
-
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent
 

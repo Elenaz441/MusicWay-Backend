@@ -1,8 +1,19 @@
+from repositories import SettingRepo
+from exceptions import NotFoundException
 from schemas import IntervalsSettingResponse
 
 
 class SettingService:
-    """Сервер для работы с настройками"""
+    """Сервис для работы с настройками."""
 
-    async def get_settings(self) -> IntervalsSettingResponse:
-        return IntervalsSettingResponse()
+    def __init__(self, repo: SettingRepo):
+        self.repo = repo
+
+    async def get_setting_by_name(self) -> IntervalsSettingResponse:
+        """Получает настройки по разделу (имени)."""
+        settings = await self.repo.find_one(['values'], name='Интервалы')
+        if not settings:
+            raise NotFoundException('setting', 'name')
+        res = dict(settings)
+        print(type(res['values']))
+        return IntervalsSettingResponse(intervals=res['values'])

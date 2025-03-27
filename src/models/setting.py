@@ -13,7 +13,7 @@ class Setting(Base):
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(length=10), nullable=False)
-    values: Mapped[list] = mapped_column(ARRAY(String(length=5)), nullable=False)
+    values: Mapped[list] = mapped_column(ARRAY(String(length=5)), nullable=True)
 
     def __str__(self):
         return f'name = {self.name}'
