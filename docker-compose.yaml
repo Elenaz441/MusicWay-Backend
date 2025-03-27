@@ -3,6 +3,7 @@ version: "3.9"
 services:
   db:
     image: postgres:12-alpine
+    container_name: db-sing
     restart: always
     ports:
       - "5432:5432"
@@ -15,21 +16,10 @@ services:
 
   adminer:
     image: adminer
+    container_name: adminer-sing
     restart: always
     ports:
       - "1234:8080"
-    networks:
-      - fastapiappnetwork
-
-  redis:
-    image: redis:6.2
-    ports:
-      - "6379:6379"
-    environment:
-      - REDIS_HOST=$REDIS_HOST
-      - REDIS_PORT=$REDIS_PORT
-      - REDIS_PASSWORD=$REDIS_PASSWORD
-    command: redis-server --requirepass ${REDIS_PASSWORD}
     networks:
       - fastapiappnetwork
 
