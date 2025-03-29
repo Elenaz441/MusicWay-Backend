@@ -12,7 +12,7 @@ class Audio(Base):
     __tablename__ = 'audio'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
-    notes: Mapped[list] = mapped_column(ARRAY(String(length=5)), nullable=False)
+    notes: Mapped[list] = mapped_column(ARRAY(String(length=15)), nullable=False)
     interval: Mapped[str] = mapped_column(String(length=10), nullable=False)
     url: Mapped[str] = mapped_column(Text, nullable=False)
 
