@@ -16,3 +16,21 @@ async def create_tasks(
 ):
     """Создает упражнения."""
     return await task_service.create_task(data)
+
+
+@router.post('/check', response_model=None)
+async def check_tasks(
+        data: CreateTaskSetting,
+        task_service: Annotated[TaskService, Depends(get_task_service)]
+):
+    """Проверяет правильно ли выполнено упражнение"""
+    pass
+
+
+@router.post('/get-mark', response_model=None)
+async def get_mark(
+        data: CreateTaskSetting,
+        task_service: Annotated[TaskService, Depends(get_task_service)]
+):
+    """Выставляет балл за упражнение"""
+    pass
