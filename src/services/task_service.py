@@ -1,5 +1,6 @@
 from repositories import TaskRepository, VariantRepository, HomeworkTaskRepository, TaskTypeRepository
 from uuid import UUID
+import httpx
 from exceptions import NotFoundException
 from schemas import TaskResponse, VariantForCreateTask, TaskSubmit, TaskAnswer
 
@@ -65,13 +66,10 @@ class TaskService:
         """Создание упражнения для тренажёра"""
         task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': data.variant_id})
         task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
-        task = {  # TODO добавить отправку на сервера
-            'condition': 'Условие1',
-            'content': {},
-            'answer': {},
-            'max_mark': 5
-        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f'{task_type_url.service_url}/tasks')
 
+        task = response.json()
         new_task = {  # TODO (поменять?)
             'condition': task['condition'],
             'content': task['content'],
@@ -91,7 +89,10 @@ class TaskService:
             raise NotFoundException('task', 'id')
         task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
         task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
-        is_right = True  # TODO отправка на сервер
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f'{task_type_url.service_url}/tasks/check')
+        is_right = response.json()['is_right']
         if not task.is_study_task and data.delete_it:
             await self.task_repo.delete_one(task_id)
         return TaskAnswer(is_right=is_right, answer=task.answer)

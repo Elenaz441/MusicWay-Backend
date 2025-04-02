@@ -8,6 +8,7 @@ from repositories import (
     HomeworkTaskRepository
 )
 from uuid import UUID
+import httpx
 from datetime import datetime, timezone
 from typing import List, Union
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
@@ -166,22 +167,10 @@ class HomeworkService:
         for variant in homework.variants:
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': variant.variant_id})
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
-            tasks = [  # TODO добавить отправку на сервера
-                {
-                    'condition': 'ДЗ Условие1',
-                    'content': {},
-                    'answer': {},
-                    'max_mark': 5,
-                    'query': 'м.2'
-                },
-                {
-                    'condition': 'ДЗ Условие2',
-                    'content': {},
-                    'answer': {},
-                    'max_mark': 5,
-                    'query': 'ч.1'
-                },
-            ]
+
+            async with httpx.AsyncClient() as client:
+                response = await client.post(f'{task_type_url.service_url}/tasks')
+            tasks = response.json()
             for task in tasks:
                 material_id = await self.material_repo.find_all(['id'], filter_by={'search_vector': task['query']}, limit=1)
                 new_task = {  # TODO (поменять?)
@@ -243,7 +232,9 @@ class HomeworkService:
             task = await self.task_repo.find_one(['id', 'variant_id'], {'id': task_answer.task_id})
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
-            mark = 4  # TODO отправка на сервер
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f'{task_type_url.service_url}/tasks/get-mark')
+            mark = response.json()['mark']
             hw_task = await self.hw_task_repo.find_one(
                 ['id'],
                 {'homework_id': homework_id, 'student_id': user_id, 'task_id': task.id}
