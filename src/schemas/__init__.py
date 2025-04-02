@@ -1,9 +1,12 @@
 __all__ = [
     'IntervalsSettingResponse',
     'CreateTaskSetting',
-    'TaskResponse'
+    'TaskResponse',
+    'CheckTask',
+    'CheckTaskResponse',
+    'GetMarkTaskResponse'
 ]
 
 
 from .setting import IntervalsSettingResponse
-from .task import CreateTaskSetting, TaskResponse
+from .task import CreateTaskSetting, TaskResponse, CheckTask, CheckTaskResponse, GetMarkTaskResponse
