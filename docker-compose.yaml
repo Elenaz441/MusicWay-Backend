@@ -6,7 +6,7 @@ services:
     container_name: db-sing
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_DB=$POSTGRES_DB
       - POSTGRES_USER=$POSTGRES_USER
@@ -19,7 +19,7 @@ services:
     container_name: adminer-sing
     restart: always
     ports:
-      - "1234:8080"
+      - "1235:8080"
     networks:
       - fastapiappnetwork
 
@@ -28,7 +28,7 @@ services:
     container_name: app-singing
     restart: always
     ports:
-      - "8000:8000"
+      - "8001:8000"
     env_file:
       - /src/.env
     depends_on:
