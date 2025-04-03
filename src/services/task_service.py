@@ -67,10 +67,13 @@ class TaskService:
         task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': data.variant_id})
         task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
         async with httpx.AsyncClient() as client:
-            response = await client.post(f'{task_type_url.service_url}/tasks')
-
-        task = response.json()
-        new_task = {  # TODO (поменять?)
+            response = await client.post(
+                f'{task_type_url.service_url}/tasks',
+                json=data.settings,
+                headers={"Content-Type": "application/json"}
+            )
+        task = response.json()[0]
+        new_task = {
             'condition': task['condition'],
             'content': task['content'],
             'answer': task['answer'],
@@ -91,7 +94,14 @@ class TaskService:
         task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f'{task_type_url.service_url}/tasks/check')
+            response = await client.post(
+                f'{task_type_url.service_url}/tasks/check',
+                json={
+                    'check_data': data.check_data,
+                    'answer': task.answer
+                },
+                headers={'Content-Type': 'application/json'}
+            )
         is_right = response.json()['is_right']
         if not task.is_study_task and data.delete_it:
             await self.task_repo.delete_one(task_id)

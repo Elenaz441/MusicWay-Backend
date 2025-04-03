@@ -102,7 +102,7 @@ class HomeworkService:
         return LastHomework.model_validate(result)
 
     async def get_homework(self, homework_id: UUID, role: str) -> TeacherHomework:
-        """Возвращает информацию о ДЗ для учителя"""
+        """Возвращает информацию о ДЗ для преподавателя"""
         if role != 'Преподаватель':
             raise NoRightsException()
 
@@ -169,11 +169,15 @@ class HomeworkService:
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
 
             async with httpx.AsyncClient() as client:
-                response = await client.post(f'{task_type_url.service_url}/tasks')
+                response = await client.post(
+                    f'{task_type_url.service_url}/tasks',
+                    json=variant.settings,
+                    headers={"Content-Type": "application/json"}
+                )
             tasks = response.json()
             for task in tasks:
                 material_id = await self.material_repo.find_all(['id'], filter_by={'search_vector': task['query']}, limit=1)
-                new_task = {  # TODO (поменять?)
+                new_task = {
                     'condition': task['condition'],
                     'content': task['content'],
                     'answer': task['answer'],
@@ -229,11 +233,18 @@ class HomeworkService:
         if not homework:
             raise NotFoundException('homework', 'homework_id')
         for task_answer in tasks:
-            task = await self.task_repo.find_one(['id', 'variant_id'], {'id': task_answer.task_id})
+            task = await self.task_repo.find_one(['id', 'variant_id', 'answer'], {'id': task_answer.task_id})
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
             async with httpx.AsyncClient() as client:
-                response = await client.get(f'{task_type_url.service_url}/tasks/get-mark')
+                response = await client.post(
+                    f'{task_type_url.service_url}/tasks/get-mark',
+                    json={
+                        'check_data': task_answer.check_data,
+                        'answer': task.answer
+                    },
+                    headers={'Content-Type': 'application/json'}
+                )
             mark = response.json()['mark']
             hw_task = await self.hw_task_repo.find_one(
                 ['id'],

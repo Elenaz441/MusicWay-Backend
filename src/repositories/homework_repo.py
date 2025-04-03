@@ -42,6 +42,7 @@ class HomeworkRepository(SQLAlchemyRepository):
                     HomeworkTask.mark.is_(None)
                 ).correlate(Homework)
             )
+            filter_by.append(student_id == HomeworkTask.student_id)
 
         stmt = (
             select(

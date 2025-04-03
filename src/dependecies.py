@@ -83,7 +83,7 @@ async def get_variant_service(
         db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> VariantService:
     """Глобальная зависимость VariantService."""
-    return VariantService(VariantRepository(db))
+    return VariantService(VariantRepository(db), TaskTypeRepository(db))
 
 
 async def get_task_service(
