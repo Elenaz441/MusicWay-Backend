@@ -51,10 +51,10 @@ def convert_russian_note_to_international(russian_note: str) -> str:
     return f'{international_note}{alteration}{octave}'
 
 
-def get_common_note(audio_bytes: bytes, file_format: str = 'wav') -> str:
+def get_common_note(audio_bytes: bytes) -> str:
     """Анализирует аудио и возвращает наиболее часто встречающуюся ноту"""
     try:
-        audio = AudioSegment.from_file(BytesIO(audio_bytes), format=file_format)
+        audio = AudioSegment.from_file(BytesIO(audio_bytes))
         samples = np.array(audio.get_array_of_samples(), dtype=np.float32)
         sample_rate = audio.frame_rate
 
