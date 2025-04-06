@@ -29,6 +29,16 @@ def convert_russian_note_to_international(russian_note: str) -> str:
         'второй': 5
     }
 
+    flat_to_sharp_map = {
+        'Cb': 'B',
+        'Db': 'C#',
+        'Eb': 'D#',
+        'Fb': 'E',
+        'Gb': 'F#',
+        'Ab': 'G#',
+        'Bb': 'A#'
+    }
+
     parts = russian_note.lower().split()
     base_note = parts[0]
 
@@ -47,6 +57,14 @@ def convert_russian_note_to_international(russian_note: str) -> str:
     international_note = note_map.get(base_note, '')
     if not international_note:
         raise ValueError(f'Неизвестная нота: {base_note}')
+
+    if alteration == 'b':
+        note_with_flat = f'{international_note}{alteration}'
+        if note_with_flat in flat_to_sharp_map:
+            international_note = flat_to_sharp_map[note_with_flat]
+            if note_with_flat == 'Cb':
+                octave -= 1
+        alteration = ''
 
     return f'{international_note}{alteration}{octave}'
 
@@ -78,7 +96,6 @@ def get_common_note(audio_bytes: bytes) -> str:
                     notes[note] += 1
                 except ValueError:
                     continue
-        print(notes)
         most_common_note = max(notes.items(), key=lambda x: x[1])[0]
         return most_common_note
     except Exception as e:
