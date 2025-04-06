@@ -27,6 +27,7 @@ __all__ = [
     'ShortClassResponse',
     'ClassResponse',
     'ShortLastHWTeacher',
+    'ShortActiveHWTeacher',
     'UserStatistic',
     'VariantStatistic',
     'HomeworkStatistic'
@@ -47,6 +48,7 @@ from .homework import (
     TeacherHomework,
     CreateHomework,
     ShortLastHWTeacher,
+    ShortActiveHWTeacher,
     HomeworkStatistic
 )
 from .learning_class import ShortClassResponse, ClassResponse

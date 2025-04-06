@@ -11,8 +11,12 @@ class ShortActiveHomework(PyBaseModel):
     id: UUID
     topic: str
     start_date: date
-    end_date: date
     max_mark: int
+
+
+class ShortActiveHWTeacher(ShortActiveHomework):
+    end_date: date
+    count: int
 
 
 class ActiveHomework(ShortActiveHomework):
@@ -21,16 +25,14 @@ class ActiveHomework(ShortActiveHomework):
     related_materials: List[ShortMaterialResponse]
 
 
-class ShortLastHomework(PyBaseModel):
-    id: UUID
-    topic: str
-    student_mark: int
-    max_mark: int
-
-
 class ShortLastHWTeacher(PyBaseModel):
     id: UUID
     topic: str
+
+
+class ShortLastHomework(ShortLastHWTeacher):
+    student_mark: int
+    max_mark: int
 
 
 class LastHomework(ShortLastHomework):

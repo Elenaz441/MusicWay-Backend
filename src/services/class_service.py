@@ -46,7 +46,7 @@ class ClassService:
                 {'id': s.student_id}
             ) for s in student_ids
         ]
-        homeworks = await self.homework_repo.find_all_active(class_id)
+        homeworks = await self.homework_repo.find_all_active(class_id, students[0].id)
         result = dict(learning_class)
         result['students'] = students
         result['active_homeworks'] = homeworks

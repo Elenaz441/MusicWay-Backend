@@ -1,6 +1,6 @@
 from .base import PyBaseModel
 from .user import UserInfo
-from .homework import ShortActiveHomework
+from .homework import ShortActiveHWTeacher
 from datetime import time
 from uuid import UUID
 from typing import List
@@ -15,4 +15,4 @@ class ShortClassResponse(PyBaseModel):
 
 class ClassResponse(ShortClassResponse):
     students: List[UserInfo]
-    active_homeworks: List[ShortActiveHomework]
+    active_homeworks: List[ShortActiveHWTeacher]

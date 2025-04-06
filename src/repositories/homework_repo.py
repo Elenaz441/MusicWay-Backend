@@ -49,6 +49,7 @@ class HomeworkRepository(SQLAlchemyRepository):
                 Homework.id, Homework.topic,
                 Homework.start_date, Homework.end_date,
                 func.sum(Task.max_mark).label('max_mark'),
+                func.count(HomeworkTask.homework_id).label('count')
             )
             .join(HomeworkTask, HomeworkTask.homework_id == Homework.id)
             .join(Task, HomeworkTask.task_id == Task.id)
