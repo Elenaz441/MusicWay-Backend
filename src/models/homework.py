@@ -1,5 +1,6 @@
 from uuid import UUID, uuid4
 from datetime import datetime
+from typing import List
 
 import sqlalchemy as alchemy
 from sqlalchemy import String, ForeignKey, Date
@@ -11,6 +12,7 @@ from .topic_block import TopicBlock
 
 
 class Homework(Base):
+    """Модель домашнего задания."""
     __tablename__ = 'homework'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
@@ -22,7 +24,7 @@ class Homework(Base):
 
     learning_class: Mapped[LearningClass] = relationship(back_populates='homeworks')
     block: Mapped[TopicBlock] = relationship(back_populates='homeworks')
-    tasks: Mapped[list['HomeworkTask']] = relationship(back_populates='homework', passive_deletes=True)
+    tasks: Mapped[List['HomeworkTask']] = relationship(back_populates='homework', passive_deletes=True)
 
     def __str__(self):
         return f'{self.__class__.__name__}(id={self.id}, topic={self.topic})'

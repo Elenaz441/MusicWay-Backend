@@ -9,6 +9,7 @@ from .study_material import StudyMaterial
 
 
 class Feedback(Base):
+    """Модель обратной связи для учебных материалов."""
     __tablename__ = 'feedback'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

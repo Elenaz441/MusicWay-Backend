@@ -4,6 +4,7 @@ from models import Feedback
 
 
 class FeedbackAdmin(ModelView, model=Feedback):
+    """Административный интерфейс для управления обратной связью."""
     name = 'Обратная связь'
     name_plural = 'Обратная связь'
     can_create = False

@@ -8,7 +8,7 @@ from repositories import (
     HomeworkTaskRepository
 )
 from uuid import UUID
-import httpx
+from utils import send_query, calculate_statistic
 from datetime import datetime, timezone
 from typing import List, Union
 from exceptions import NotFoundException, NoRightsException, IncorrectDataException
@@ -37,8 +37,20 @@ class HomeworkService:
         self.variant_repo = variant_repo
         self.hw_task_repo = hw_task_repo
 
-    async def get_homeworks_by_user(self, user_id: UUID, active: bool) -> List[Union[ShortActiveHomework, ShortLastHomework]]:
-        """Получение списка домашних заданий"""
+    async def get_homeworks_by_user(
+            self,
+            user_id: UUID,
+            active: bool
+    ) -> List[Union[ShortActiveHomework, ShortLastHomework]]:
+        """Получение списка домашних заданий.
+
+        :param user_id: Идентификатор пользователя.
+        :param active: Флаг, обозначающий какие задания вернуть (активные или завершенные).
+
+        :return: Список домашних заданий.
+
+        :raises NotFoundException: Если не найден класс для данного пользователя.
+        """
         class_id = await self.student_class_repo.find_one(['class_id'], {'student_id': user_id})
         if not class_id:
             raise NotFoundException('класс', 'user_id')
@@ -49,7 +61,18 @@ class HomeworkService:
         return [ShortLastHomework.model_validate(task) for task in tasks]
 
     async def get_active_homework(self, homework_id: UUID, user_id: UUID, role: str) -> ActiveHomework:
-        """Возвращает информацию для активного ДЗ ученику."""
+        """Возвращает информацию для активного ДЗ ученику.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param user_id: Идентификатор пользователя.
+        :param role: Роль пользователя.
+
+        :return: Информация об автикном домашнем задании.
+
+        :raises NoRightsException: Нет прав.
+        :raises IncorrectDataException: Задание уже завершено.
+        :raises NotFoundException: Если указанное домашнее задание не найдено.
+        """
         if role != 'Ученик':
             raise NoRightsException()
 
@@ -70,13 +93,24 @@ class HomeworkService:
         return ActiveHomework.model_validate(result)
 
     async def get_completed_homework(self, homework_id: UUID, user_id: UUID, role: str) -> LastHomework:
-        """Возвращает информацию для завершенного ДЗ ученику."""
+        """Возвращает информацию для завершенного ДЗ ученику.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param user_id: Идентификатор пользователя.
+        :param role: Роль пользователя.
+
+        :return: Информация о завершенном домашнем задании.
+
+        :raises NoRightsException: Нет прав.
+        :raises IncorrectDataException: Задание ещё не завершено.
+        :raises NotFoundException: Если указанное домашнее задание не найдено.
+        """
         if role != 'Ученик':
             raise NoRightsException()
 
         is_completed = await self.homework_repo.is_completed(homework_id, user_id)
         if not is_completed:
-            raise IncorrectDataException('Задание ещё незавершено.')
+            raise IncorrectDataException('Задание ещё не завершено.')
 
         homework_info = await self.homework_repo.find_one_with_mark(homework_id, user_id)
         if not homework_info:
@@ -102,7 +136,16 @@ class HomeworkService:
         return LastHomework.model_validate(result)
 
     async def get_homework(self, homework_id: UUID, role: str) -> TeacherHomework:
-        """Возвращает информацию о ДЗ для преподавателя"""
+        """Возвращает информацию о ДЗ для преподавателя.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param role: Роль пользователя.
+
+        :return: Информация о домашнем задании.
+
+        :raises NoRightsException: Нет прав.
+        :raises NotFoundException: Если указанное домашнее задание не найдено.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
 
@@ -149,7 +192,15 @@ class HomeworkService:
         return TeacherHomework.model_validate(result)
 
     async def create_homework(self, homework: CreateHomework, role: str) -> UUID:
-        """Создание ДЗ."""
+        """Создание ДЗ.
+
+        :param homework: Данные о новом домашнем задании.
+        :param role: Роль пользователя.
+
+        :return: Идентификатор созданного задания.
+
+        :raises NoRightsException: Нет прав.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
         new_homework = {
@@ -162,21 +213,21 @@ class HomeworkService:
         homework_id = await self.homework_repo.add_one(new_homework)
 
         task_ids = []
-        number = 1
 
         for variant in homework.variants:
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': variant.variant_id})
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
-
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f'{task_type_url.service_url}/tasks',
-                    json=variant.settings,
-                    headers={"Content-Type": "application/json"}
+            tasks = await send_query(
+                'POST',
+                f'{task_type_url.service_url}/tasks',
+                variant.settings
+            )
+            for number, task in enumerate(tasks, 1):
+                material_id = await self.material_repo.find_all(
+                    ['id'],
+                    filter_by={'search_query': task['query']},
+                    limit=1
                 )
-            tasks = response.json()
-            for task in tasks:
-                material_id = await self.material_repo.find_all(['id'], filter_by={'search_vector': task['query']}, limit=1)
                 new_task = {
                     'condition': task['condition'],
                     'content': task['content'],
@@ -188,7 +239,6 @@ class HomeworkService:
                 }
                 task_id = await self.task_repo.add_one(new_task)
                 task_ids.append(task_id)
-                number += 1
 
         student_ids = await self.student_class_repo.find_all(['student_id'], {'class_id': homework.class_id})
         for student_id in student_ids:
@@ -203,14 +253,29 @@ class HomeworkService:
         return homework_id
 
     async def edit_homework(self, homework_id: UUID, homework: EditHomework, role: str) -> UUID:
-        """Редактирование ДЗ."""
+        """Редактирование ДЗ.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param homework: Данные, которые надо отредактировать.
+        :param role: Роль пользователя.
+
+        :return: Идентификатор отредактированного задания.
+
+        :raises NoRightsException: Нет прав.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
         await self.homework_repo.edit_one(homework_id, homework.model_dump(exclude_none=True))
         return homework_id
 
     async def delete_homework(self, homework_id: UUID, role: str):
-        """Удаление ДЗ."""
+        """Удаление ДЗ.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param role: Роль пользователя.
+
+        :raises NoRightsException: Нет прав.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
         task_ids = await self.hw_task_repo.find_all(['task_id'], {'homework_id': homework_id})
@@ -226,7 +291,18 @@ class HomeworkService:
             user_id: UUID,
             role: str
     ) -> LastHomework:
-        """Отправка ДЗ на проверку"""
+        """Отправка ДЗ на проверку.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param tasks: Данные об ответах ученика.
+        :param user_id: Идентификатор пользователя.
+        :param role: Роль пользователя.
+
+        :return: Данные о завершенном домашнем задании.
+
+        :raises NoRightsException: Нет прав.
+        :raises NotFoundException: Если указанное домашнее задание не найдено.
+        """
         if role != 'Ученик':
             raise NoRightsException()
         homework = await self.homework_repo.find_one(['id'], {'id': homework_id})
@@ -236,16 +312,12 @@ class HomeworkService:
             task = await self.task_repo.find_one(['id', 'variant_id', 'answer'], {'id': task_answer.task_id})
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
             task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f'{task_type_url.service_url}/tasks/get-mark',
-                    json={
-                        'check_data': task_answer.check_data,
-                        'answer': task.answer
-                    },
-                    headers={'Content-Type': 'application/json'}
-                )
-            mark = response.json()['mark']
+            response = await send_query(
+                'POST',
+                f'{task_type_url.service_url}/tasks/get-mark',
+                {'check_data': task_answer.check_data, 'answer': task.answer}
+            )
+            mark = response['mark']
             hw_task = await self.hw_task_repo.find_one(
                 ['id'],
                 {'homework_id': homework_id, 'student_id': user_id, 'task_id': task.id}
@@ -254,16 +326,19 @@ class HomeworkService:
         return await self.get_completed_homework(homework_id, user_id, role)
 
     async def get_statistic(self, homework_id: UUID, role: str) -> List[VariantStatistic]:
+        """Получение статистики по домашнему заданию.
+
+        :param homework_id: Идентификатор домашнего задания.
+        :param role: Роль пользователя.
+
+        :return: Список стастики по каждому варианту упражнений.
+
+        :raises NoRightsException: Нет прав.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
-        result = {}
         hw_tasks = await self.homework_repo.get_marks(homework_id)
-        for task in hw_tasks:
-            key = task['name']
-            if key not in result:
-                result[key] = {'name': key, 'student_mark': 0, 'max_mark': 0}
-            result[key]['student_mark'] += task['student_mark']
-            result[key]['max_mark'] += task['max_mark']
+        result = calculate_statistic(hw_tasks)
 
         return [
             VariantStatistic(
@@ -272,5 +347,3 @@ class HomeworkService:
             )
             for r in result.values()
         ]
-
-

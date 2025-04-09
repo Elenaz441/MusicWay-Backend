@@ -11,6 +11,7 @@ from .task import Task
 
 
 class HomeworkTask(Base):
+    """Модель связи домашнего задания, ученика и упражнения."""
     __tablename__ = 'homework_task'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

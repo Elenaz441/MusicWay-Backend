@@ -20,6 +20,15 @@ class ClassService:
         self.homework_repo = homework_repo
 
     async def get_classes(self, teacher_id: UUID, role: str) -> List[ShortClassResponse]:
+        """Получение всех классов, прикреплённых к преподавателю.
+
+        :param teacher_id: Идентификатор преподавателя.
+        :param role: Роль пользователя (должна быть "Преподаватель").
+
+        :return: Список краткой информации о классах.
+
+        :raises NoRightsException: Если роль не соответствует требуемой.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
         classes = await self.class_repo.find_all(
@@ -29,6 +38,16 @@ class ClassService:
         return [ShortClassResponse.model_validate(c) for c in classes]
 
     async def get_class_by_id(self, class_id: UUID, teacher_id: UUID, role: str) -> ClassResponse:
+        """Получение подробной информации о конкретном классе.
+
+        :param class_id: Идентификатор класса.
+        :param teacher_id: Идентификатор преподавателя.
+        :param role: Роль пользователя (должна быть "Преподаватель").
+
+        :return: Объект с полной информацией о классе.
+
+        :raises NoRightsException: Если пользователь не имеет прав.
+        :raises NotFoundException: Если класс не найден."""
         if role != 'Преподаватель':
             raise NoRightsException()
         learning_class = await self.class_repo.find_one(
@@ -53,6 +72,17 @@ class ClassService:
         return ClassResponse.model_validate(result)
 
     async def get_last_homeworks(self, class_id: UUID, teacher_id: UUID, role: str) -> List[ShortLastHWTeacher]:
+        """Получение списка завершённых домашних заданий для класса.
+
+        :param class_id: Идентификатор класса.
+        :param teacher_id: Идентификатор преподавателя.
+        :param role: Роль пользователя (должна быть "Преподаватель").
+
+        :return: Список завершённых заданий.
+
+        :raises NoRightsException: Если нет прав.
+        :raises NotFoundException: Если класс не найден.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
         learning_class = await self.class_repo.find_one(
@@ -67,10 +97,16 @@ class ClassService:
         return [ShortLastHWTeacher.model_validate(task) for task in tasks]
 
     async def get_statistic(self, class_id: UUID, role: str) -> List[HomeworkStatistic]:
-        """Получает стаитстику выполнения ДЗ за последние три месяца"""
+        """Получение статистики выполнения домашних заданий за последние 3 месяца.
+
+        :param class_id: Идентификатор класса.
+        :param role: Роль пользователя (должна быть "Преподаватель").
+
+        :return: Список статистики по домашним заданиям.
+
+        :raises NoRightsException: Если роль не соответствует.
+        """
         if role != 'Преподаватель':
             raise NoRightsException()
         statistics = await self.homework_repo.get_statistic(class_id)
         return [HomeworkStatistic.model_validate(statistic) for statistic in statistics]
-
-

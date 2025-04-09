@@ -32,6 +32,7 @@ class ApiPrefix(BaseModel):
 
 class DatabaseConfig(BaseModel):
     url: PostgresDsn
+    echo: bool
 
     naming_convention: dict[str, str] = {
         'ix': 'ix_%(column_0_label)s',

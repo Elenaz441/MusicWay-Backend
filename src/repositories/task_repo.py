@@ -10,7 +10,12 @@ class TaskRepository(SQLAlchemyRepository):
     model = Task
 
     async def find_one(self, fields: List[str], filter_by: Optional[Dict[str, Any]] = None) -> RowMapping:
-        """Получает одну запись, возвращая только указанные поля."""
+        """Получает одно задание с указанными полями.
+
+        :param fields: Список полей для выборки
+        :param filter_by: Условия фильтрации (может включать список ID заданий)
+
+        :return: Данные задания или None, если не найдено"""
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns)
 
@@ -20,15 +25,18 @@ class TaskRepository(SQLAlchemyRepository):
                 if key == 'task_ids':
                     filters.append(Task.id.in_(value))
                 else:
-                    column = getattr(self.model, key)
-                    filters.append(column == value)
+                    filters.append(getattr(self.model, key) == value)
             stmt = stmt.where(*filters)
 
         res = await self.db.execute(stmt)
         return res.mappings().first()
 
     async def find_all_by_material(self, material_id: UUID) -> Sequence[RowMapping]:
-        """Возвращает количество упражнений, сгруппированных по варианту, для учебного материала."""
+        """Возвращает количество упражнений, сгруппированных по варианту, для учебного материала.
+
+        :param material_id: Идентификатор учебного материала
+
+        :return: Список вариантов с количеством заданий"""
 
         stmt = (
             select(
@@ -45,7 +53,12 @@ class TaskRepository(SQLAlchemyRepository):
         return res.mappings().all()
 
     async def find_all_by_homework(self, homework_id: UUID, student_id: UUID) -> Sequence[RowMapping]:
-        """Возвращает количество упражнений, сгруппированных по варианту, для домашнего задания."""
+        """Получает задания домашней работы с группировкой по вариантам.
+
+        :param homework_id: Идентификатор домашней работы
+        :param student_id: Идентификатор ученика
+
+        :return: Список вариантов с количеством заданий"""
         stmt = (
             select(
                 Variant.id.label('variant_id'),

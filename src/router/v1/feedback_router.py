@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from services import FeedbackService
-from typing import Annotated
+from typing import Annotated, Dict
 from schemas import CreateFeedback
 from dependecies import get_feedback_service, get_current_user
 from exceptions import NoRightsException, NotFoundException
@@ -12,10 +12,19 @@ router = APIRouter(tags=['Feedback'])
 @router.post('', status_code=status.HTTP_201_CREATED)
 async def submit_feedback(
         feedback: CreateFeedback,
-        payload: Annotated[dict, Depends(get_current_user)],
+        payload: Annotated[Dict, Depends(get_current_user)],
         feedback_server: Annotated[FeedbackService, Depends(get_feedback_service)]
 ):
-    """Регистрация нового пользователя."""
+    """Отправка обратной связи.
+
+    :param feedback: Данные об обратной связи.
+    :param payload: JWT payload текущего пользователя.
+    :param feedback_server: Сервис работы с обратной связью.
+
+    :return: Сообщение об успешной отправке.
+
+    :raises HTTPException 403: Нет прав на отправку.
+    :raises HTTPException 404: Материал не найден."""
     try:
         await feedback_server.create_feedback(feedback, payload['role'])
         return {'message': 'Обратная связь отправлена.'}

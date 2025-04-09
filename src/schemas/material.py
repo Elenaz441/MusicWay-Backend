@@ -1,5 +1,6 @@
 from .base import PyBaseModel
 from uuid import UUID
+from typing import Optional
 
 
 class ShortMaterialResponse(PyBaseModel):
@@ -8,7 +9,7 @@ class ShortMaterialResponse(PyBaseModel):
 
 
 class MaterialVideoResponse(PyBaseModel):
-    video_url: str
+    video_url: Optional[str] = None
 
 
 class MaterialTextResponse(PyBaseModel):

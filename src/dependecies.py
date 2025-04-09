@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,7 +55,7 @@ async def get_current_user(
         payload = await auth_service.decode_jwt(token)
         return payload
     except InvalidTokenException as e:
-        raise HTTPException(status_code=401, detail=str(e.name))
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e.name))
 
 
 async def get_topic_block_service(

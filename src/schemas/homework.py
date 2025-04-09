@@ -10,12 +10,12 @@ from typing import List, Optional
 class ShortActiveHomework(PyBaseModel):
     id: UUID
     topic: str
-    start_date: date
+    end_date: date
     max_mark: int
 
 
 class ShortActiveHWTeacher(ShortActiveHomework):
-    end_date: date
+    start_date: date
     count: int
 
 

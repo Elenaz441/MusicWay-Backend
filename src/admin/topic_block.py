@@ -4,6 +4,7 @@ from models import TopicBlock
 
 
 class TopicBlockAdmin(ModelView, model=TopicBlock):
+    """Административный интерфейс для управления разделами."""
     name = 'Раздел'
     name_plural = 'Разделы'
     column_list = [TopicBlock.name, TopicBlock.image_url]

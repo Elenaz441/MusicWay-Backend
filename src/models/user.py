@@ -10,6 +10,7 @@ from .role import Role
 
 
 class User(Base):
+    """Модель пользователя."""
     __tablename__ = 'user'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

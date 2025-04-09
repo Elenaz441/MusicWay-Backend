@@ -1,7 +1,8 @@
 from uuid import UUID, uuid4
+from typing import List
 
 import sqlalchemy as alchemy
-from sqlalchemy import String, ForeignKey, Text, Index, event, func, Integer
+from sqlalchemy import String, ForeignKey, Text, Index, func, Integer, event, Computed
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 
@@ -11,6 +12,7 @@ from .topic_block import TopicBlock
 
 
 class StudyMaterial(Base):
+    """Модель учебного материала."""
     __tablename__ = 'study_material'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
@@ -21,10 +23,13 @@ class StudyMaterial(Base):
     number: Mapped[int] = mapped_column(Integer, nullable=False)
 
     block: Mapped[TopicBlock] = relationship(back_populates='materials')
-    comments: Mapped[list['Feedback']] = relationship(back_populates='material')
-    tasks: Mapped[list['Task']] = relationship(back_populates='material')
+    comments: Mapped[List['Feedback']] = relationship(back_populates='material')
+    tasks: Mapped[List['Task']] = relationship(back_populates='material')
 
-    search_vector: Mapped[str] = mapped_column(TSVECTOR)
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed("to_tsvector('russian', name || ' ' || text)", persisted=True)
+    )
 
     __table_args__ = (
         Index('study_materials_search_idx', search_vector, postgresql_using='gin'),
@@ -34,8 +39,8 @@ class StudyMaterial(Base):
         return self.name
 
 
-@event.listens_for(StudyMaterial, 'before_insert')
-@event.listens_for(StudyMaterial, 'before_update')
-def update_search_vector(mapper, connection, target):
-    """Автоматически обновляет search_vector перед сохранением."""
-    target.search_vector = func.to_tsvector('russian', f'{target.name} {target.text}')
+# @event.listens_for(StudyMaterial, 'before_insert')
+# @event.listens_for(StudyMaterial, 'before_update')
+# def update_search_vector(mapper, connection, target):
+#     """Автоматически обновляет search_vector перед сохранением."""
+#     target.search_vector = func.to_tsvector('russian', f'{target.name} {target.text}')

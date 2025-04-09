@@ -1,5 +1,5 @@
 from .sqlalchemy_repo import SQLAlchemyRepository
-from models import Homework, Task, HomeworkTask, Variant, TopicBlock, User, StudentClass
+from models import Homework, Task, HomeworkTask, Variant, TopicBlock, User
 from typing import Sequence, Optional, Dict, Any
 from sqlalchemy import select, func, between, exists, RowMapping, Integer
 from sqlalchemy.sql.functions import coalesce
@@ -12,7 +12,13 @@ class HomeworkRepository(SQLAlchemyRepository):
     model = Homework
 
     async def find_one_with_mark(self, homework_id: UUID, student_id: UUID) -> RowMapping:
-        """Получает одну запись."""
+        """Получает домашнее задание с баллами студента.
+
+        :param homework_id: Идентификатор домашнего задания
+        :param student_id: Идентификатор ученика
+
+        :return: Информация о домашнем задании с баллами или None
+        """
         stmt = (
             select(
                 Homework.id, Homework.topic,
@@ -31,18 +37,24 @@ class HomeworkRepository(SQLAlchemyRepository):
         return res.mappings().first()
 
     async def find_all_active(self, class_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
-        """Получает активные домашние задания по классу."""
+        """Получает активные домашние задания для класса.
+
+        :param class_id: Идентификатор класса
+        :param student_id: Опциональный идентификатор ученика
+
+        :return: Список активных заданий
+        """
 
         filter_by = [class_id == Homework.class_id, between(func.now(), Homework.start_date, Homework.end_date)]
         if student_id:
-            filter_by.append(
+            filter_by.extend([
                 exists().where(
                     HomeworkTask.homework_id == Homework.id,
                     student_id == HomeworkTask.student_id,
                     HomeworkTask.mark.is_(None)
-                ).correlate(Homework)
-            )
-            filter_by.append(student_id == HomeworkTask.student_id)
+                ).correlate(Homework),
+                student_id == HomeworkTask.student_id
+            ])
 
         stmt = (
             select(
@@ -61,23 +73,29 @@ class HomeworkRepository(SQLAlchemyRepository):
         return res.mappings().all()
 
     async def find_all_completed(self, filter_by: Dict[str, Any]) -> Sequence[RowMapping]:
-        """Получает завершенные домашние задания по классу"""
+        """Получает завершенные домашние задания по фильтру.
+
+        :param filter_by: Словарь условий фильтрации
+
+        :return: Список завершенных заданий
+        """
         filters = []
+        student_condition = None
         for key, value in filter_by.items():
             if key == 'student_id':
-                filters.append(
-                    (Homework.end_date < func.now())
-                    | ~exists().where(
-                        HomeworkTask.homework_id == Homework.id,
-                        value == HomeworkTask.student_id,
-                        HomeworkTask.mark.is_(None)
-                    ).correlate(Homework)
-                )
-                filters.append(value == HomeworkTask.student_id)
+                student_condition = ((Homework.end_date < func.now())
+                                     | ~exists().where(
+                                        HomeworkTask.homework_id == Homework.id,
+                                        value == HomeworkTask.student_id,
+                                        HomeworkTask.mark.is_(None)
+                                    ).correlate(Homework))
+                filters.extend([
+                    student_condition,
+                    value == HomeworkTask.student_id
+                ])
             else:
-                column = getattr(self.model, key)
-                filters.append(column == value)
-        if 'student_id' not in filter_by.keys():
+                filters.append(getattr(self.model, key) == value)
+        if student_condition is None:
             filters.append(Homework.end_date < func.now())
 
         stmt = (
@@ -96,7 +114,13 @@ class HomeworkRepository(SQLAlchemyRepository):
         return res.mappings().all()
 
     async def is_completed(self, homework_id: UUID, student_id: UUID) -> bool:
-        """Определяет, завершил ли ученик ДЗ (либо по сроку, либо по оценкам)."""
+        """Проверяет, завершено ли домашнее задание.
+
+        :param homework_id: Идентификатор задания
+        :param student_id: Идентификатор ученика
+
+        :return: True если задание завершено, иначе False
+        """
         stmt = select(
             exists().where(
                 homework_id == Homework.id,
@@ -112,7 +136,13 @@ class HomeworkRepository(SQLAlchemyRepository):
         return res.scalar()
 
     async def get_marks(self, homework_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
-        """Получает все задания и оценки в ДЗ."""
+        """Получает оценки по домашнему заданию.
+
+        :param homework_id: Идентификатор задания
+        :param student_id: Опциональный идентификатор ученика
+
+        :return: Список оценок
+        """
 
         filter_by = [homework_id == HomeworkTask.homework_id]
         if student_id:
@@ -135,7 +165,12 @@ class HomeworkRepository(SQLAlchemyRepository):
         return res.mappings().all()
 
     async def get_homework_students(self, homework_id: UUID) -> Sequence[RowMapping]:
-        """Получает список учеников и их общий балл по домашнему заданию."""
+        """Получает список учеников с их баллами по заданию.
+
+        :param homework_id: Идентификатор задания
+
+        :return: Список учеников с баллами
+        """
         stmt = (
             select(
                 User.id,
@@ -147,13 +182,19 @@ class HomeworkRepository(SQLAlchemyRepository):
             .join(HomeworkTask, HomeworkTask.student_id == User.id)
             .where(homework_id == HomeworkTask.homework_id)
             .group_by(User.id)
+            .order_by(User.surname, User.name)
         )
 
         res = await self.db.execute(stmt)
         return res.mappings().all()
 
     async def get_homework_tasks(self, homework_id: UUID) -> Sequence[RowMapping]:
-        """Получает список заданий для всех учеников с баллами."""
+        """Получает детальную информацию по заданиям.
+
+        :param homework_id: Идентификатор задания
+
+        :return: Список заданий с оценками
+        """
         stmt = (
             select(
                 User.id.label('student_id'),
@@ -165,13 +206,19 @@ class HomeworkRepository(SQLAlchemyRepository):
             .join(Task, HomeworkTask.task_id == Task.id)
             .join(Variant, Task.variant_id == Variant.id)
             .where(homework_id == HomeworkTask.homework_id)
+            .order_by(User.surname, User.name)
         )
 
         res = await self.db.execute(stmt)
         return res.mappings().all()
 
     async def get_statistic(self, class_id: UUID) -> Sequence[RowMapping]:
-        """Получает статистику по завершённым ДЗ для класса."""
+        """Получает статистику по завершенным заданиям за последние 3 месяца.
+
+        :param class_id: Идентификатор класса
+
+        :return: Статистика успеваемости
+        """
         three_months_ago = datetime.now().date() - timedelta(days=90)
 
         stmt = (
@@ -186,7 +233,6 @@ class HomeworkRepository(SQLAlchemyRepository):
                     0
                 ).cast(Integer).label('success_rate')
             )
-            .join(StudentClass, StudentClass.class_id == Homework.class_id)
             .join(HomeworkTask, HomeworkTask.homework_id == Homework.id, isouter=True)
             .join(Task, HomeworkTask.task_id == Task.id, isouter=True)
             .where(
@@ -200,4 +246,3 @@ class HomeworkRepository(SQLAlchemyRepository):
 
         res = await self.db.execute(stmt)
         return res.mappings().all()
-

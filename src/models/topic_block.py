@@ -9,6 +9,7 @@ from .base import Base
 
 
 class TopicBlock(Base):
+    """Модель раздела."""
     __tablename__ = 'topic_block'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

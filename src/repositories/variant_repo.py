@@ -11,6 +11,12 @@ class VariantRepository(SQLAlchemyRepository):
     model = Variant
 
     async def find_all_by_block(self, block_id: UUID, fields: List[str]) -> Sequence[RowMapping]:
+        """Получает варианты упражнений для указанного тематического блока.
+
+        :param block_id: Идентификатор тематического блока
+        :param fields: Список полей для выборки (None для всех полей)
+
+        :return: Список вариантов с дополнительной информацией"""
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns).join(TaskType).where(block_id == TaskType.block_id)
         res = await self.db.execute(stmt)

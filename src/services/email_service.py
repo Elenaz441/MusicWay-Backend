@@ -21,10 +21,15 @@ conf = ConnectionConfig(
 
 
 class EmailService:
+    """Сервис для отправки email-сообщений пользователям."""
     def __init__(self):
         self.fm = FastMail(conf)
 
     async def send_welcome_message(self, email_to: str, data: Dict[str, str]):
+        """Отправляет приветственное письмо новому пользователю после регистрации.
+
+        :param email_to: Email получателя.
+        :param data: Данные для шаблона письма (например, имя пользователя)."""
         message = MessageSchema(
             subject='Регистрация в приложении MusicWay',
             recipients=[email_to],

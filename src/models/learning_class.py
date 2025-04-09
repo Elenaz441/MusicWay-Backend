@@ -1,5 +1,6 @@
 from uuid import UUID, uuid4
 from datetime import time
+from typing import List
 
 import sqlalchemy as alchemy
 from sqlalchemy import Integer, ForeignKey, String, Time
@@ -10,6 +11,7 @@ from .base import Base
 
 
 class LearningClass(Base):
+    """Модель класса."""
     __tablename__ = 'learning_class'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
@@ -19,8 +21,8 @@ class LearningClass(Base):
     teacher_id: Mapped[UUID] = mapped_column(ForeignKey(User.id, ondelete='RESTRICT'), nullable=False)
 
     teacher: Mapped[User] = relationship(back_populates='classes')
-    students: Mapped[list['StudentClass']] = relationship(back_populates='learning_class')
-    homeworks: Mapped[list['Homework']] = relationship(back_populates='learning_class')
+    students: Mapped[List['StudentClass']] = relationship(back_populates='learning_class')
+    homeworks: Mapped[List['Homework']] = relationship(back_populates='learning_class')
 
     def __str__(self):
         return f'Класс {self.class_number}. {self.week_day} в {self.class_time}'

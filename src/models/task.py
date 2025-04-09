@@ -11,6 +11,7 @@ from .study_material import StudyMaterial
 
 
 class Task(Base):
+    """Модель упражнения."""
     __tablename__ = 'task'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

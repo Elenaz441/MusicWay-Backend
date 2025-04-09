@@ -9,6 +9,7 @@ from .topic_block import TopicBlock
 
 
 class TaskType(Base):
+    """Модель типа упражнения."""
     __tablename__ = 'task_type'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

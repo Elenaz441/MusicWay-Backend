@@ -1,7 +1,6 @@
 from repositories import TopicBlockRepository, StudentClassRepository, HomeworkRepository
 from schemas import UserStatistic
 from exceptions import NoRightsException, NotFoundException
-from typing import List
 from uuid import UUID
 
 
@@ -18,6 +17,15 @@ class UserService:
         self.homework_repo = homework_repo
 
     async def get_statistic(self, user_id: UUID, role: str) -> UserStatistic:
+        """Получает процент успешности выполнения заданий.
+
+        :param user_id: Идентификатор пользователя.
+        :param role: Роль пользователя.
+
+        :return: Процент успешности.
+
+        :raises NoRightsException: Нет прав.
+        """
         if role != 'Ученик':
             raise NoRightsException()
         blocks = await self.block_repo.find_all(['id', 'name', 'image_url'])
@@ -29,6 +37,7 @@ class UserService:
         student_mark = 0
         max_mark = 0
         for task in tasks:
+            print(task.student_mark, task.max_mark)
             student_mark += task.student_mark
             max_mark += task.max_mark
         success_rate = student_mark * 100 // max_mark

@@ -4,6 +4,7 @@ from models import StudentClass
 
 
 class StudentClassAdmin(ModelView, model=StudentClass):
+    """Административный интерфейс для управления учениками в классе."""
     name = 'Ученик_класс'
     name_plural = 'Ученики_классы'
     column_list = [StudentClass.learning_class, StudentClass.student]

@@ -10,6 +10,7 @@ from .learning_class import LearningClass
 
 
 class StudentClass(Base):
+    """Модель связи ученика и класса."""
     __tablename__ = 'student_class'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

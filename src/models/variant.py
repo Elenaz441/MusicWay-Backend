@@ -10,6 +10,7 @@ from .task_type import TaskType
 
 
 class Variant(Base):
+    """Модель варианта типа упражнения."""
     __tablename__ = 'variant'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

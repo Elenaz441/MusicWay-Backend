@@ -12,8 +12,13 @@ from admin import (
 )
 
 
-def setup_admin(app: FastAPI):
-    """Настройка SQLAdmin с кастомной авторизацией."""
+def setup_admin(app: FastAPI) -> Admin:
+    """Настройка SQLAdmin с кастомной авторизацией.
+
+    :param app: FastAPI приложение для интеграции
+
+    :return: Экземпляр SQLAdmin для дополнительной конфигурации
+    """
     auth_backend = AdminAuth()
     app.add_event_handler('startup', auth_backend.setup)
     admin = Admin(

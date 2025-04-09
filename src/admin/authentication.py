@@ -1,5 +1,5 @@
 from sqladmin.authentication import AuthenticationBackend
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, status
 import jwt
 from config import settings
 from datetime import datetime, timezone
@@ -10,7 +10,18 @@ from starlette.responses import RedirectResponse
 
 
 class AdminAuth(AuthenticationBackend):
-    """Кастомная аутентификация для SQLAdmin"""
+    """Кастомный бэкенд аутентификации для SQLAdmin.
+
+    Обеспечивает:
+
+    - Аутентификацию через JWT
+    - Ролевую проверку (только для админов)
+    - Инвалидацию токенов
+    - Управление сессиями
+
+    :ivar db: Асинхронная сессия SQLAlchemy
+    :ivar redis: Асинхронная сессия Redis
+    :ivar auth_service: Сервис аутентификации"""
 
     def __init__(self):
         super().__init__(secret_key=settings.auth.secret_key)
@@ -19,6 +30,7 @@ class AdminAuth(AuthenticationBackend):
         self.auth_service = None
 
     async def setup(self):
+        """Устанавливает асинхронные подключения к БД и Redis."""
         async for session in get_async_session():
             self.db = session
             break
@@ -30,52 +42,63 @@ class AdminAuth(AuthenticationBackend):
         self.auth_service = await get_auth_service(self.db, self.redis)
 
     async def login(self, request: Request) -> RedirectResponse:
-        """Обрабатывает логин через форму SQLAdmin."""
+        """Обрабатывает аутентификацию через форму входа.
+
+        :param request: Запрос с данными формы.
+
+        :return: Редирект после успешной аутентификации.
+
+        :raises HTTPException: При ошибках аутентификации (400, 401)."""
         form = await request.form()
         email = form.get('username')
         password = form.get('password')
 
         if not email or not password:
-            raise HTTPException(status_code=400, detail='Введите email и пароль.')
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Введите email и пароль.')
 
         try:
             token = await self.auth_service.login_user(email, password)
             access_token = token.access_token
         except IncorrectDataException as e:
-            raise HTTPException(status_code=401, detail=str(e))
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-        response = RedirectResponse(url='/admin', status_code=302)
+        response = RedirectResponse(url='/admin', status_code=status.HTTP_302_FOUND)
         request.session.update({'token': access_token})
         return response
 
     async def authenticate(self, request: Request) -> bool:
-        """Авторизация пользователя в админке."""
+        """Проверяет аутентификацию и права доступа.
+
+        :param request: Входящий запрос.
+
+        :return: Результат проверки доступа."""
         token = request.session.get('token')
 
         if not token:
             return False
 
         try:
-            payload = jwt.decode(token, settings.auth.secret_key, algorithms=['HS256'])
-            exp = payload.get('exp')
+            payload = jwt.decode(token, settings.auth.secret_key, algorithms=[settings.auth.algorithm])
             role = payload.get('role')
-            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
-                return False
-
             if role != 'Админ':
                 return False
-
+            exp = payload.get('exp')
+            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+                return False
             return True
 
-        except jwt.ExpiredSignatureError:
-            return False
-        except jwt.InvalidTokenError:
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
             return False
 
     async def logout(self, request: Request) -> RedirectResponse:
-        """Выход из системы."""
+        """Обрабатывает выход из системы.
+
+        :param request: Входящий запрос.
+
+        :return: Редирект на страницу входа.
+        """
         token = request.session.get('token')
         await self.auth_service.invalidate_token(token)
         request.session.clear()
 
-        return RedirectResponse(url='/admin/login', status_code=302)
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
