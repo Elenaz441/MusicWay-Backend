@@ -12,9 +12,11 @@ RUN git clone https://github.com/aubio/aubio.git && \
     python setup.py install && \
     cd ..
 
-RUN apt-get update && apt-get install -y ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg netcat-openbsd
 
 COPY ./src /code/src
 
-CMD ["alembic", "upgrade", "head"]
-CMD ["fastapi", "run", "src/main.py", "--port", "8000"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

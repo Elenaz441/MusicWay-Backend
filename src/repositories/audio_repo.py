@@ -8,7 +8,13 @@ class AudioRepo(SQLAlchemyRepository):
     model = Audio
 
     async def find_random_audio(self, fields, **filter_by) -> RowMapping:
-        """Получает одну запись, возвращая только указанные поля."""
+        """Получает одну случайную запись, возвращая только указанные поля.
+
+        :param fields: Список полей для выборки
+        :param filter_by: Условия фильтрации (ключ - имя поля, значение - условие)
+
+        :return: Данные записи или None, если не найдено
+        """
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns).filter_by(**filter_by).order_by(func.random())
         res = await self.db.execute(stmt)

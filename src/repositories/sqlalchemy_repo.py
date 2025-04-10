@@ -6,13 +6,25 @@ from .abstract_repo import AbstractRepository
 
 
 class SQLAlchemyRepository(AbstractRepository):
+    """Абстрактный репозиторий для работы с SQLAlchemy ORM.
+
+    :param db: Асинхронная сессия SQLAlchemy
+    :var model: Модель SQLAlchemy, с которой работает репозиторий
+    """
+
     model = None
 
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def find_one(self, fields: List[str], **filter_by) -> RowMapping:
-        """Получает одну запись, возвращая только указанные поля."""
+        """Получает одну запись, возвращая только указанные поля.
+
+        :param fields: Список полей для выборки
+        :param filter_by: Условия фильтрации (ключ - имя поля, значение - условие)
+
+        :return: Данные записи или None, если не найдено
+        """
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns).filter_by(**filter_by)
         res = await self.db.execute(stmt)
@@ -25,7 +37,15 @@ class SQLAlchemyRepository(AbstractRepository):
             order_by: Optional[str] = None,
             limit: Optional[int] = None
     ) -> Sequence[RowMapping]:
-        """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества."""
+        """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества.
+
+        :param fields: Список полей для выборки
+        :param filter_by: Условия фильтрации
+        :param order_by: Поле для сортировки
+        :param limit: Максимальное количество записей
+
+        :return: Список записей
+        """
 
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns)

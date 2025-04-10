@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=$POSTGRES_USER
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
     networks:
-      - fastapiappnetwork
+      - app-sing
 
   adminer:
     image: adminer
@@ -21,7 +21,7 @@ services:
     ports:
       - "1235:8080"
     networks:
-      - fastapiappnetwork
+      - app-sing
 
   app:
     build: .
@@ -34,7 +34,7 @@ services:
     depends_on:
       - db
     networks:
-      - fastapiappnetwork
+      - app-sing
 
 networks:
-  fastapiappnetwork:
+  app-sing:

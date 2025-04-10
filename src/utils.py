@@ -6,7 +6,12 @@ from fastapi import HTTPException
 
 
 def convert_russian_note_to_international(russian_note: str) -> str:
-    """Конвертирует русские названия нот с октавами в международный формат."""
+    """Конвертирует русские названия нот с октавами в международный формат.
+
+    :param russian_note: Название ноты на русском (например "до диез первой октавы").
+
+    :return: Название ноты в международном формате.
+    """
 
     note_map = {
         'до': 'C',
@@ -70,7 +75,12 @@ def convert_russian_note_to_international(russian_note: str) -> str:
 
 
 def get_common_note(audio_bytes: bytes) -> str:
-    """Анализирует аудио и возвращает наиболее часто встречающуюся ноту"""
+    """Анализирует аудио и возвращает наиболее часто встречающуюся ноту.
+
+    :param audio_bytes: Аудио.
+
+    :return: Основная нота.
+    """
     try:
         audio = AudioSegment.from_file(BytesIO(audio_bytes))
         samples = np.array(audio.get_array_of_samples(), dtype=np.float32)

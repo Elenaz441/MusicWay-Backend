@@ -16,7 +16,12 @@ class TaskService:
         self.setting_repo = setting_repo
 
     async def create_task(self, settings: CreateTaskSetting) -> List[TaskResponse]:
-        """Создает упражнение по переданным настройкам"""
+        """Создает упражнение по переданным настройкам.
+
+        :param settings: Настройки для создания.
+
+        :return: Список упражнений.
+        """
         tasks = []
         intervals = settings.intervals
         if 'Все' in intervals:
@@ -39,7 +44,12 @@ class TaskService:
         return tasks
 
     async def check_task(self, task: CheckTask) -> CheckTaskResponse:
-        """Проверяет правильность выполнения упражнения"""
+        """Проверяет правильность выполнения упражнения.
+
+        :param task: Упражнение для проверки.
+
+        :return: Результат проверки.
+        """
         audio_1 = base64.b64decode(task.check_data.audio_1)
         user_note_1 = get_common_note(audio_1)
         answer_note_1 = convert_russian_note_to_international(task.answer.note_1)
@@ -52,7 +62,12 @@ class TaskService:
         )
 
     async def get_mark(self, task: CheckTask) -> GetMarkTaskResponse:
-        """Выставляет балл за упражнение"""
+        """Выставляет балл за упражнение
+
+        :param task: Упражнение для выставления баллов.
+
+        :return: Балл за упражнение.
+        """
         check = await self.check_task(task)
         return GetMarkTaskResponse(mark=int(check.is_right))
 

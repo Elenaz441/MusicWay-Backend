@@ -9,6 +9,7 @@ from .base import Base
 
 
 class Setting(Base):
+    """Модель настроек для задания"""
     __tablename__ = 'setting'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

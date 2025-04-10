@@ -9,6 +9,7 @@ from .base import Base
 
 
 class Audio(Base):
+    """Модель аудиозаписи"""
     __tablename__ = 'audio'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)

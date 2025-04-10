@@ -10,10 +10,12 @@ class SettingService:
         self.repo = repo
 
     async def get_setting_by_name(self) -> IntervalsSettingResponse:
-        """Получает настройки по разделу (имени)."""
+        """Получает настройки по разделу (имени).
+
+        :return: Настройки.
+        """
         settings = await self.repo.find_one(['values'], name='Интервалы')
         if not settings:
             raise NotFoundException('setting', 'name')
         res = dict(settings)
-        print(type(res['values']))
         return IntervalsSettingResponse(intervals=res['values'])
