@@ -14,7 +14,7 @@ setup_admin(app)
 
 @app.post('/upload/')
 async def upload_file(file: UploadFile):
-    filename = f'materials-{uuid4()}.{file.filename.split('.')[-1]}'
+    filename = f'materials-{uuid4()}.{file.filename.split(".")[-1]}'
     await file.seek(0)
     my_storage.write(file.file, filename)
     file_url = my_storage.get_path(filename)
