@@ -1,0 +1,293 @@
+openapi: 3.0.3
+info:
+  title: MusicWay. Singing
+  description: Спецификация для сервера, которые обрабатывает задания на пропевания.
+  version: 1.0.0
+
+tags:
+  - name: Settings
+    description: Действия с настройками
+  - name: Tasks
+    description: Действия с упражнениями
+
+paths:
+  /api/v1/settings:
+    get:
+      tags:
+        - Settings
+      summary: Получение настроек
+      description: Получение настроек упражнения.
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntervalsSettingResponse'
+        '500':
+          description: Ошибка сервера
+
+  /api/v1/tasks:
+    post:
+      tags:
+        - Tasks
+      summary: Генерация упражнений
+      description: Генерация одного или нескольких упражнений.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskSetting'
+        required: true
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+                type: array
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+
+  /api/v1/tasks/check:
+    post:
+      tags:
+        - Tasks
+      summary: Проверка ответа пользователя
+      description: Проверяет правильно ли выполнено упражнение.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckTask'
+        required: true
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckTaskResponse'
+        '400':
+          description: Ошибка в данных, которые отправил пользователь (например, с аудио)
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+
+  /api/v1/tasks/get-mark:
+    post:
+      tags:
+        - Tasks
+      summary: Расчет баллов за упражнение
+      description: Выставляет балл за упражнение.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckTask'
+        required: true
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMarkTaskResponse'
+        '400':
+          description: Ошибка в данных, которые отправил пользователь (например, с аудио)
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+
+components:
+  schemas:
+    Answer:
+      properties:
+        audio_url:
+          type: string
+        note_1:
+          type: string
+          example: до
+          title: Note 1
+        note_2:
+          type: string
+          example: до
+          title: Note 2
+      type: object
+      required:
+        - audio_url
+        - note_1
+        - note_2
+      title: Answer
+
+    AnswerResponse:
+      properties:
+        audio_url:
+          type: string
+          title: Audio Url
+      type: object
+      required:
+        - audio_url
+      title: AnswerResponse
+
+    CheckData:
+      properties:
+        audio_1:
+          type: string
+          title: Audio 1
+          description: Аудиозапись в зашифрованная в base64
+        audio_2:
+          type: string
+          title: Audio 2
+          description: Аудиозапись в зашифрованная в base64
+      type: object
+      required:
+        - audio_1
+        - audio_2
+      title: CheckData
+
+    CheckTask:
+      properties:
+        check_data:
+          $ref: '#/components/schemas/CheckData'
+        answer:
+          $ref: '#/components/schemas/Answer'
+      type: object
+      required:
+        - check_data
+        - answer
+      title: CheckTask
+
+    CheckTaskResponse:
+      properties:
+        is_right:
+          type: boolean
+          title: Is Right
+        answer:
+          $ref: '#/components/schemas/AnswerResponse'
+      type: object
+      required:
+        - is_right
+        - answer
+      title: CheckTaskResponse
+
+    CreateTaskSetting:
+      properties:
+        intervals:
+          items:
+            type: string
+          type: array
+          example: ['Все', 'м.2', 'б.2']
+          title: Intervals
+        count:
+          type: integer
+          nullable: true
+          title: Count
+          default: 1
+      type: object
+      required:
+        - intervals
+      title: CreateTaskSetting
+
+    GetMarkTaskResponse:
+      properties:
+        mark:
+          type: integer
+          example: 1
+          title: Mark
+      type: object
+      required:
+        - mark
+      title: GetMarkTaskResponse
+
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+
+    IntervalsSettingResponse:
+      properties:
+        intervals:
+          items:
+            type: string
+          type: array
+          example: ['Все', 'м.2', 'б.2']
+          title: Intervals
+      type: object
+      required:
+        - intervals
+      title: IntervalsSettingResponse
+
+    TaskResponse:
+      properties:
+        condition:
+          type: string
+          title: Condition
+          example: Пропой восходящий интервал ч.1 от ноты до
+        content:
+          type: object
+          title: Content
+          default: {}
+          nullable: true
+        answer:
+          $ref: '#/components/schemas/Answer'
+        max_mark:
+          type: integer
+          example: 1
+          title: Max Mark
+        query:
+          type: string
+          nullable: true
+          example: ч.1
+          title: Query
+      type: object
+      required:
+        - condition
+        - answer
+        - max_mark
+      title: TaskResponse
+
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
