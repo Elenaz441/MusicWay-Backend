@@ -58,7 +58,9 @@ class MaterialRepository(SQLAlchemyRepository):
         stmt = (
             select(
                 StudyMaterial.id,
-                StudyMaterial.name
+                StudyMaterial.name,
+                StudyMaterial.number,
+                StudyMaterial.block_id
             )
             .join(Task, Task.material_id == StudyMaterial.id)
             .join(HomeworkTask, HomeworkTask.task_id == Task.id)

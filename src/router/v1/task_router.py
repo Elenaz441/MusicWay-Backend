@@ -5,7 +5,7 @@ from services import TaskService
 from typing import Annotated, Dict
 from schemas import TaskResponse, VariantForCreateTask, TaskAnswer, TaskSubmit
 from dependecies import get_current_user, get_task_service
-from exceptions import NotFoundException
+from exceptions import NotFoundException, NoRightsException
 
 
 router = APIRouter(tags=['Task'])
@@ -106,6 +106,8 @@ async def get_task_by_homework(
             homework_id=homework_id,
             task_number=task_number
         )
+    except NoRightsException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
     except NotFoundException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 

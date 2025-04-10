@@ -33,5 +33,19 @@ services:
     networks:
       - fastapiappnetwork
 
+  app:
+    build: .
+    container_name: app-main
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - /src/.env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - fastapiappnetwork
+
 networks:
   fastapiappnetwork:

@@ -210,7 +210,6 @@ class HomeworkService:
             'block_id': homework.block_id,
             'class_id': homework.class_id
         }
-        homework_id = await self.homework_repo.add_one(new_homework)
 
         task_ids = []
 
@@ -225,7 +224,7 @@ class HomeworkService:
             for number, task in enumerate(tasks, 1):
                 material_id = await self.material_repo.find_all(
                     ['id'],
-                    filter_by={'search_query': task['query']},
+                    filter_by={'search_vector': task['query']},
                     limit=1
                 )
                 new_task = {
@@ -241,6 +240,7 @@ class HomeworkService:
                 task_ids.append(task_id)
 
         student_ids = await self.student_class_repo.find_all(['student_id'], {'class_id': homework.class_id})
+        homework_id = await self.homework_repo.add_one(new_homework)
         for student_id in student_ids:
             for task_id in task_ids:
                 homework_task = {

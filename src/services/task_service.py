@@ -1,7 +1,7 @@
 from repositories import TaskRepository, VariantRepository, HomeworkTaskRepository, TaskTypeRepository
 from uuid import UUID
 from utils import send_query
-from exceptions import NotFoundException
+from exceptions import NotFoundException, NoRightsException
 from schemas import TaskResponse, VariantForCreateTask, TaskSubmit, TaskAnswer
 from typing import Any
 
@@ -66,7 +66,10 @@ class TaskService:
         :return: Информация об упражнении.
 
         :raises NotFoundException: Если указанное упражнение не найдено.
+        :raises NoRightsException: Нет прав.
         """
+        if role != 'Ученик':
+            raise NoRightsException()
         task_ids = await self.hw_task_repo.find_all(['task_id'], filter_by={'homework_id': homework_id})
         if not task_ids:
             raise NotFoundException('упражнение', 'homework_id')

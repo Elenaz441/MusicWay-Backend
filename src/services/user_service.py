@@ -40,5 +40,8 @@ class UserService:
             print(task.student_mark, task.max_mark)
             student_mark += task.student_mark
             max_mark += task.max_mark
-        success_rate = student_mark * 100 // max_mark
+        if max_mark != 0:
+            success_rate = student_mark * 100 // max_mark
+        else:
+            success_rate = 0
         return UserStatistic(success_rate=success_rate, topic_blocks=blocks)

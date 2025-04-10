@@ -41,6 +41,7 @@ class LastHomework(ShortLastHomework):
 
 class TeacherHomework(ActiveHomework):
     is_completed: bool
+    start_date: date
     task_type_variants: List[VariantForActiveTask]
     results: List[UserResultTask]
 
