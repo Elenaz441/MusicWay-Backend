@@ -21,7 +21,7 @@ from exceptions import NotFoundException, NoRightsException, IncorrectDataExcept
 router = APIRouter(tags=['Homework'])
 
 
-@router.post('/create', response_model=UUID)
+@router.post('', response_model=UUID)
 async def create_homework(
         homework_data: CreateHomework,
         payload: Annotated[Dict, Depends(get_current_user)],
@@ -229,5 +229,3 @@ async def get_homework_statistic(
         return await homework_service.get_statistic(homework_id, payload['role'])
     except NoRightsException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e.name))
-
-

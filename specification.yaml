@@ -1,0 +1,2129 @@
+openapi: 3.0.3
+info:
+  title: MusicWay
+  description: Спецификация для основного сервера без маршрутов для админки.
+  version: 1.0.0
+
+tags:
+  - name: Auth
+    description: Авторизация
+  - name: User
+    description: Действия с пользователями
+  - name: Topic Block
+    description: Действия с разделами
+  - name: Study material
+    description: Действия с учебными материалами
+  - name: Feedback
+    description: Действия с обратной связью
+  - name: Variant
+    description: Действия с вариантами типов заданий
+  - name: Task
+    description: Действия с упражнениями
+  - name: Class
+    description: Действия с классами
+  - name: Homework
+    description: Действия с домашними заданиями
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Регистрация пользователя
+      description: Регистрация нового пользователя.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+        required: true
+      responses:
+        '201':
+          description: Пользователь зарегистрирован.
+          content:
+            application/json:
+              schema: {}
+        '409':
+          description: Пользователь с таким email или phone уже существует
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/auth/login:
+    get:
+      tags:
+        - Auth
+      summary: Проверка состояния пользователя
+      description: Возвращает информацию по авторизованному пользователю
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema: {}
+        '401':
+          description: Аутентификация не пройдена
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+    post:
+      tags:
+        - Auth
+      summary: Авторизация пользователя
+      description: Авторизует пользователя на основе почты и пароля
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_api_v1_auth_login_post'
+        required: true
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Почта или пароль неверные
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Обновление токенов
+      description: Обновление refresh и access токенов.
+      requestBody:
+        description: Refresh token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Токен для обновления не валиден
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/auth/logout:
+    delete:
+      tags:
+        - Auth
+      summary: Выход пользователя
+      description: Выход пользователя из личного кабинета
+      responses:
+        '204':
+          description: ОК
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Неверный токен
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/auth/change-password:
+    patch:
+      tags:
+        - Auth
+      summary: Смена пароля
+      description: Смена пароля. Маршрут для смены пароля при первой авторизации преподавателя и администратора.
+      requestBody:
+        description: Новый пароль пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/users/statistic:
+    get:
+      tags:
+        - User
+      summary: Получение статистики выполнения заданий
+      description: Получение статистики выполнения домашних заданий по ученику.
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatistic'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/topic-blocks:
+    get:
+      tags:
+        - Topic Block
+      summary: Получение списка разделов
+      description: Получение списка разделов.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TopicBlockResponse'
+                type: array
+                title: Response Get Topic Blocks Api V1 Topic Blocks Get
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/topic-blocks/{block_id}/statistic:
+    get:
+      tags:
+        - Topic Block
+      summary: Получение статистики по разделу
+      description: Получение статистики по разделу с процентом успешности выполнения по каждому варианту задания.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Block Id
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VariantStatistic'
+                title: >-
+                  Response Get Topic Block Statistic Api V1 Topic Blocks  Block
+                  Id  Statistic Get
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/materials:
+    get:
+      tags:
+        - Study material
+      summary: Получение списка учебных материалов по разделу
+      description: Получение списка учебных материалов в виде их заголовков.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: block_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Block Id
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortMaterialResponse'
+                title: Response Get Materials Api V1 Materials Get
+        '400':
+          description: Ошибка в данных, которые отправил пользователь (не указан id раздела)
+        '401':
+          description: Пользователь не авторизован
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/materials/{material_id}/video:
+    get:
+      tags:
+        - Study material
+      summary: Видео из учебному материалу
+      description: Возвращает ссылку на видео из учебного материала.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: material_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Material Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialVideoResponse'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найден учебный материал с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/materials/{material_id}/text:
+    get:
+      tags:
+        - Study material
+      summary: Тескт из учебного материала
+      description: Возвращает текст из одного учебного материала.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: material_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Material Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialTextResponse'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найден учебный материал с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/materials/{material_id}/tasks:
+    get:
+      tags:
+        - Study material
+      summary: Информация по учебному материалу
+      description: Возвращает детальную информацию по одному учебному материалу.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: material_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Material Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VariantForActiveTask'
+                title: >-
+                  Response Get Material Tasks Api V1 Materials  Material Id 
+                  Tasks Get
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найден учебный материал с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/materials/search:
+    get:
+      tags:
+        - Study material
+      summary: Получение списка учебных материалов
+      description: Получение списка учебных материалов по ключевым словам.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortMaterialResponse'
+                title: Response Get Materials Api V1 Materials Search Get
+        '401':
+          description: Пользователь не авторизован
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/feedbacks:
+    post:
+      tags:
+        - Feedback
+      summary: Отправка обратной связи
+      description: Отправка обратной связи по учебному материалу от преподавателя.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeedback'
+        required: true
+      responses:
+        '201':
+          description: ОК
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Ошибка в данных, которые отправил пользователь
+        '401':
+          description: Пользователь не авторизован
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/variants:
+    get:
+      tags:
+        - Variant
+      summary: Получение вариантов упражнений
+      description: Получение вариантов упражнений по разделу.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: block_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Block Id
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortVariantResponse'
+                title: Response Get Variants Api V1 Variants Get
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдены варианты по block_id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/variants/{variant_id}:
+    get:
+      tags:
+        - Variant
+      summary: Информация по варианту задания
+      description: Возвращает детальную информацию по варианту типа задания.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Variant Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariantResponse'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найден вариант с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/tasks:
+    post:
+      tags:
+        - Task
+      summary: Создание упражнения
+      description: Создание упражнения по настройкам пользователя.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariantForCreateTask'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+                title: Response Create Task Api V1 Tasks Post
+        '400':
+          description: Ошибка в данных, которые отправил пользователь
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Нет прав на создание
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/tasks/{task_id}:
+    get:
+      tags:
+        - Task
+      summary: Получение упражнения
+      description: Получение упражнения.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                task_definition_by_ear:
+                  summary: Определение на слух
+                  value:
+                    id: 6329c3d6a04ab1061c6425ea
+                    condition: string
+                    task_type_variant: string
+                    description: string
+                    content:
+                      image_url: string
+                      image_name: Моцарт
+                      audio_urls:
+                        - url: string
+                      intervals:
+                        - name: Б.3
+
+                task_singing:
+                  summary: Пропевание
+                  value:
+                    id: 6329c3d6a04ab1061c6425ea
+                    condition: string
+                    task_type_variant: string
+                    description: string
+                    content:
+
+                task_melody:
+                  summary: Мелодия на пианино
+                  value:
+                    id: 6329c3d6a04ab1061c6425ea
+                    condition: string
+                    task_type_variant: string
+                    description: string
+                    content:
+                      initial_note: До
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдено упражнение с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/tasks/{material_id}/{variant_id}/{task_number}:
+    get:
+      tags:
+        - Task
+      summary: Получение упражнения из материала
+      description: Получение упражнения из учебного материала.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: material_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Material Id
+        - name: variant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Variant Id
+        - name: task_number
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Task Number
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдено упражнение
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/tasks/{homework_id}/{task_number}:
+    get:
+      tags:
+        - Task
+      summary: Получение упражнения по дз
+      description: Получение упражнения.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+        - name: task_number
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Task Number
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдено упражнение
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/tasks/{task_id}/check:
+    post:
+      tags:
+        - Task
+      summary: Проверка ответа пользователя
+      description: Проверка ответа пользователя.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Task Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSubmit'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAnswer'
+        '400':
+          description: Ошибка в данных, которые отправил пользователь
+        '401':
+          description: Пользователь не авторизован
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/classes:
+    get:
+      tags:
+        - Class
+      summary: Получение списка классов
+      description: Получение списка классов.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ShortClassResponse'
+                type: array
+                title: Response Get Classes Api V1 Classes Get
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+  /api/v1/classes/{class_id}:
+    get:
+      tags:
+        - Class
+      summary: Информация по классу
+      description: Возвращает детальную информацию по одному классу.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Class Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '404':
+          description: Не найден класс с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/classes/{class_id}/last_homework:
+    get:
+      tags:
+        - Class
+      summary: Прошедшие ДЗ у класса
+      description: Получение прошедших домашних заданий у класса.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Class Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortLastHWTeacher'
+                title: >-
+                  Response Get Class Last Homework Api V1 Classes  Class Id 
+                  Last Homework Get
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '404':
+          description: Не найден класс с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/classes/{class_id}/statistic:
+    get:
+      tags:
+        - Class
+      summary: Получение статистики по классу
+      description: Получение статистики по классу за последние три месяца.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Class Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HomeworkStatistic'
+                title: >-
+                  Response Get Class Statistic Api V1 Classes  Class Id 
+                  Statistic Get
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '404':
+          description: Не найден класс с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/homeworks:
+    post:
+      tags:
+        - Homework
+      summary: Создание ДЗ
+      description: Создание домашнего задания.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHomework'
+        required: true
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+                title: Response Create Homework Api V1 Homeworks Create Post
+        '400':
+          description: Ошибка в данных, которые отправил пользователь
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Нет прав на создание
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+      security:
+        - OAuth2PasswordBearer: []
+    get:
+      tags:
+        - Homework
+      summary: Получение списка ДЗ
+      description: Получение списка домашних заданий.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: active
+          in: query
+          required: true
+          schema:
+            type: boolean
+            title: Active
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: '#/components/schemas/ShortActiveHomework'
+                    - $ref: '#/components/schemas/ShortLastHomework'
+                title: Response Get Homework Api V1 Homeworks Get
+        '401':
+          description: Пользователь не авторизован
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/homeworks/{homework_id}/active:
+    get:
+      tags:
+        - Homework
+      summary: Получение активного ДЗ
+      description: Получение активного домашнего задания.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveHomework'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдено ДЗ с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/homeworks/{homework_id}/completed:
+    get:
+      tags:
+        - Homework
+      summary: Получение завершенного ДЗ
+      description: Получение завершенного домашнего задания.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastHomework'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдено ДЗ с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/homeworks/{homework_id}:
+    get:
+      tags:
+        - Homework
+      summary: Получение ДЗ для преподавателя
+      description: Получение домашнего задания для преподавателя.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherHomework'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Не найдено ДЗ с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+    patch:
+      tags:
+        - Homework
+      summary: Обновление информации о ДЗ
+      description: Обновление информации о домашнем задании.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditHomework'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+                title: Response Update Homework Api V1 Homeworks  Homework Id  Patch
+        '400':
+          description: Ошибка в данных
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Нет прав на редактирование
+        '404':
+          description: Не найдено ДЗ с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+    delete:
+      tags:
+        - Homework
+      summary: Удаление ДЗ
+      description: Удаление домашнего задания.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      responses:
+        '204':
+          description: ОК
+        '400':
+          description: Ошибка в данных
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '404':
+          description: Не найдено ДЗ с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/homeworks/{homework_id}/submit:
+    post:
+      tags:
+        - Homework
+      summary: Отправка ДЗ на проверку
+      description: Отправка домашнего задания на проверку.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskHomeworkSubmit'
+              title: Data
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastHomework'
+        '400':
+          description: Ошибка в данных, которые отправил пользователь
+        '401':
+          description: Пользователь не авторизован
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+  /api/v1/homeworks/{homework_id}/statistic:
+    get:
+      tags:
+        - Homework
+      summary: Получение статистики по ДЗ
+      description: Получение успешности выполнения задания по вариантам упражнения.
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: homework_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Homework Id
+      responses:
+        '200':
+          description: ОК
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VariantStatistic'
+                title: >-
+                  Response Get Homework Statistic Api V1 Homeworks  Homework Id 
+                  Statistic Get
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Ошибка прав доступа
+        '404':
+          description: Не найдено ДЗ с таким id
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Ошибка сервера
+components:
+  schemas:
+    ActiveHomework:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        end_date:
+          type: string
+          format: date
+          title: End Date
+        max_mark:
+          type: integer
+          title: Max Mark
+        block:
+          type: string
+          title: Block
+        task_type_variants:
+          items:
+            $ref: '#/components/schemas/VariantForActiveTask'
+          type: array
+          title: Task Type Variants
+        related_materials:
+          items:
+            $ref: '#/components/schemas/ShortMaterialResponse'
+          type: array
+          title: Related Materials
+      type: object
+      required:
+        - id
+        - topic
+        - end_date
+        - max_mark
+        - block
+        - task_type_variants
+        - related_materials
+      title: ActiveHomework
+    Body_login_api_v1_auth_login_post:
+      properties:
+        grant_type:
+          anyOf:
+            - type: string
+              pattern: ^password$
+          nullable: true
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ''
+        client_id:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Client Id
+        client_secret:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Client Secret
+      type: object
+      required:
+        - username
+        - password
+      title: Body_login_api_v1_auth_login_post
+    Body_upload_file_upload__post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+        - file
+      title: Body_upload_file_upload__post
+    ChangePasswordRequest:
+      properties:
+        new_password:
+          type: string
+          maxLength: 30
+          minLength: 8
+          title: New Password
+      type: object
+      required:
+        - new_password
+      title: ChangePasswordRequest
+    ClassResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        class_number:
+          type: integer
+          title: Class Number
+        week_day:
+          type: string
+          title: Week Day
+        class_time:
+          type: string
+          format: time
+          title: Class Time
+        students:
+          items:
+            $ref: '#/components/schemas/UserInfo'
+          type: array
+          title: Students
+        active_homeworks:
+          items:
+            $ref: '#/components/schemas/ShortActiveHWTeacher'
+          type: array
+          title: Active Homeworks
+      type: object
+      required:
+        - id
+        - class_number
+        - week_day
+        - class_time
+        - students
+        - active_homeworks
+      title: ClassResponse
+    CreateFeedback:
+      properties:
+        material_id:
+          type: string
+          format: uuid
+          title: Material Id
+        comment:
+          type: string
+          title: Comment
+      type: object
+      required:
+        - material_id
+        - comment
+      title: CreateFeedback
+    CreateHomework:
+      properties:
+        topic:
+          type: string
+          title: Topic
+        start_date:
+          type: string
+          format: date
+          title: Start Date
+        end_date:
+          type: string
+          format: date
+          title: End Date
+        block_id:
+          type: string
+          format: uuid
+          title: Block Id
+        class_id:
+          type: string
+          format: uuid
+          title: Class Id
+        variants:
+          items:
+            $ref: '#/components/schemas/VariantForCreateTask'
+          type: array
+          title: Variants
+      type: object
+      required:
+        - topic
+        - start_date
+        - end_date
+        - block_id
+        - class_id
+        - variants
+      title: CreateHomework
+    EditHomework:
+      properties:
+        topic:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Topic
+        start_date:
+          anyOf:
+            - type: string
+              format: date
+          nullable: true
+          title: Start Date
+        end_date:
+          anyOf:
+            - type: string
+              format: date
+          nullable: true
+          title: End Date
+      type: object
+      title: EditHomework
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HomeworkStatistic:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        success_rate:
+          type: integer
+          title: Success Rate
+      type: object
+      required:
+        - id
+        - topic
+        - success_rate
+      title: HomeworkStatistic
+    LastHomework:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        student_mark:
+          type: integer
+          title: Student Mark
+        max_mark:
+          type: integer
+          title: Max Mark
+        task_type_variants:
+          items:
+            $ref: '#/components/schemas/VariantForLastTask'
+          type: array
+          title: Task Type Variants
+      type: object
+      required:
+        - id
+        - topic
+        - student_mark
+        - max_mark
+        - task_type_variants
+      title: LastHomework
+    MaterialTextResponse:
+      properties:
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+        - text
+      title: MaterialTextResponse
+    MaterialVideoResponse:
+      properties:
+        video_url:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Video Url
+      type: object
+      title: MaterialVideoResponse
+    RefreshTokenRequest:
+      properties:
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+        - refresh_token
+      title: RefreshTokenRequest
+    ShortActiveHWTeacher:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        end_date:
+          type: string
+          format: date
+          title: End Date
+        max_mark:
+          type: integer
+          title: Max Mark
+        start_date:
+          type: string
+          format: date
+          title: Start Date
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+        - id
+        - topic
+        - end_date
+        - max_mark
+        - start_date
+        - count
+      title: ShortActiveHWTeacher
+    ShortActiveHomework:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        end_date:
+          type: string
+          format: date
+          title: End Date
+        max_mark:
+          type: integer
+          title: Max Mark
+      type: object
+      required:
+        - id
+        - topic
+        - end_date
+        - max_mark
+      title: ShortActiveHomework
+    ShortClassResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        class_number:
+          type: integer
+          title: Class Number
+        week_day:
+          type: string
+          title: Week Day
+        class_time:
+          type: string
+          format: time
+          title: Class Time
+      type: object
+      required:
+        - id
+        - class_number
+        - week_day
+        - class_time
+      title: ShortClassResponse
+    ShortLastHWTeacher:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+      type: object
+      required:
+        - id
+        - topic
+      title: ShortLastHWTeacher
+    ShortLastHomework:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        student_mark:
+          type: integer
+          title: Student Mark
+        max_mark:
+          type: integer
+          title: Max Mark
+      type: object
+      required:
+        - id
+        - topic
+        - student_mark
+        - max_mark
+      title: ShortLastHomework
+    ShortMaterialResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+        - id
+        - name
+      title: ShortMaterialResponse
+    ShortVariantResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        image_url:
+          type: string
+          title: Image Url
+      type: object
+      required:
+        - id
+        - name
+        - image_url
+      title: ShortVariantResponse
+    TaskAnswer:
+      properties:
+        is_right:
+          type: boolean
+          title: Is Right
+        answer:
+          type: object
+          title: Answer
+      type: object
+      required:
+        - is_right
+        - answer
+      title: TaskAnswer
+    TaskForLastHomework:
+      properties:
+        number:
+          type: integer
+          title: Number
+        student_mark:
+          type: integer
+          title: Student Mark
+        max_mark:
+          type: integer
+          title: Max Mark
+      type: object
+      required:
+        - number
+        - student_mark
+        - max_mark
+      title: TaskForLastHomework
+    TaskHomeworkSubmit:
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          title: Task Id
+        check_data:
+          type: object
+          title: Check Data
+      type: object
+      required:
+        - task_id
+        - check_data
+      title: TaskHomeworkSubmit
+    TaskResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        condition:
+          type: string
+          title: Condition
+        task_type_variant:
+          type: string
+          title: Task Type Variant
+        description:
+          type: string
+          title: Description
+        content:
+          type: object
+          title: Content
+      type: object
+      required:
+        - id
+        - condition
+        - task_type_variant
+        - description
+        - content
+      title: TaskResponse
+    TaskResultForTeacher:
+      properties:
+        name:
+          type: string
+          title: Name
+        student_mark:
+          anyOf:
+            - type: integer
+          nullable: true
+          title: Student Mark
+        max_mark:
+          type: integer
+          title: Max Mark
+      type: object
+      required:
+        - name
+        - student_mark
+        - max_mark
+      title: TaskResultForTeacher
+    TaskSubmit:
+      properties:
+        delete_it:
+          type: boolean
+          title: Delete It
+        check_data:
+          type: object
+          title: Check Data
+      type: object
+      required:
+        - delete_it
+        - check_data
+      title: TaskSubmit
+    TeacherHomework:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        topic:
+          type: string
+          title: Topic
+        end_date:
+          type: string
+          format: date
+          title: End Date
+        max_mark:
+          type: integer
+          title: Max Mark
+        block:
+          type: string
+          title: Block
+        task_type_variants:
+          items:
+            $ref: '#/components/schemas/VariantForActiveTask'
+          type: array
+          title: Task Type Variants
+        related_materials:
+          items:
+            $ref: '#/components/schemas/ShortMaterialResponse'
+          type: array
+          title: Related Materials
+        is_completed:
+          type: boolean
+          title: Is Completed
+        start_date:
+          type: string
+          format: date
+          title: Start Date
+        results:
+          items:
+            $ref: '#/components/schemas/UserResultTask'
+          type: array
+          title: Results
+      type: object
+      required:
+        - id
+        - topic
+        - end_date
+        - max_mark
+        - block
+        - task_type_variants
+        - related_materials
+        - is_completed
+        - start_date
+        - results
+      title: TeacherHomework
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+        - access_token
+        - refresh_token
+      title: TokenResponse
+    TopicBlockResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        image_url:
+          type: string
+          title: Image Url
+      type: object
+      required:
+        - id
+        - name
+        - image_url
+      title: TopicBlockResponse
+    UserInfo:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        surname:
+          type: string
+          title: Surname
+        patronymic:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Patronymic
+      type: object
+      required:
+        - id
+        - name
+        - surname
+      title: UserInfo
+    UserRegister:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          maxLength: 30
+          minLength: 8
+          title: Password
+        name:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: Name
+        surname:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: Surname
+        patronymic:
+          anyOf:
+            - type: string
+              maxLength: 100
+              minLength: 2
+          nullable: true
+          title: Patronymic
+        birthdate:
+          type: string
+          format: date
+          title: Birthdate
+        role:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Role
+          default: Ученик
+      type: object
+      required:
+        - email
+        - password
+        - name
+        - surname
+        - patronymic
+        - birthdate
+      title: UserRegister
+    UserResultTask:
+      properties:
+        name:
+          type: string
+          title: Name
+        surname:
+          type: string
+          title: Surname
+        patronymic:
+          anyOf:
+            - type: string
+          nullable: true
+          title: Patronymic
+        student_mark:
+          anyOf:
+            - type: integer
+          nullable: true
+          title: Student Mark
+        tasks:
+          items:
+            $ref: '#/components/schemas/TaskResultForTeacher'
+          type: array
+          title: Tasks
+      type: object
+      required:
+        - name
+        - surname
+        - tasks
+      title: UserResultTask
+    UserStatistic:
+      properties:
+        success_rate:
+          type: integer
+          title: Success Rate
+        topic_blocks:
+          items:
+            $ref: '#/components/schemas/TopicBlockResponse'
+          type: array
+          title: Topic Blocks
+      type: object
+      required:
+        - success_rate
+        - topic_blocks
+      title: UserStatistic
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
+    VariantForActiveTask:
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+          title: Variant Id
+        name:
+          type: string
+          title: Name
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+        - variant_id
+        - name
+        - count
+      title: VariantForActiveTask
+    VariantForCreateTask:
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+          title: Variant Id
+        settings:
+          type: object
+          title: Settings
+      type: object
+      required:
+        - variant_id
+        - settings
+      title: VariantForCreateTask
+    VariantForLastTask:
+      properties:
+        name:
+          type: string
+          title: Name
+        student_mark:
+          type: integer
+          title: Student Mark
+        max_mark:
+          type: integer
+          title: Max Mark
+        tasks:
+          items:
+            $ref: '#/components/schemas/TaskForLastHomework'
+          type: array
+          title: Tasks
+      type: object
+      required:
+        - name
+        - student_mark
+        - max_mark
+        - tasks
+      title: VariantForLastTask
+    VariantResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        image_url:
+          type: string
+          title: Image Url
+        description:
+          type: string
+          title: Description
+        demo_url:
+          type: string
+          title: Demo Url
+        settings:
+          type: object
+          title: Settings
+      type: object
+      required:
+        - id
+        - name
+        - image_url
+        - description
+        - demo_url
+        - settings
+      title: VariantResponse
+    VariantStatistic:
+      properties:
+        name:
+          type: string
+          title: Name
+        success_rate:
+          type: integer
+          title: Success Rate
+      type: object
+      required:
+        - name
+        - success_rate
+      title: VariantStatistic
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/auth/login
