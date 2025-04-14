@@ -65,8 +65,7 @@ async def get_login_status(
     return {
         'message': 'Вы авторизованы',
         'id': payload['sub'],
-        'role': payload['role'],
-        'is_first_login': payload['is_first_login']
+        'role': payload['role']
     }
 
 

@@ -1864,6 +1864,12 @@ components:
         refresh_token:
           type: string
           title: Refresh Token
+        role:
+          type: string
+        name:
+          type: string
+        is_first_login:
+          type: boolean
       type: object
       required:
         - access_token

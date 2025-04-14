@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from .base import PyBaseModel
 from .task import TaskForLastHomework
@@ -32,7 +32,7 @@ class VariantForLastTask(PyBaseModel):
 
 class VariantForCreateTask(PyBaseModel):
     variant_id: UUID
-    settings: Dict[str, Any]
+    settings: Optional[Dict[str, Any]] = None
 
 
 class VariantStatistic(PyBaseModel):

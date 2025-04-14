@@ -80,22 +80,29 @@ class AuthService:
 
         :raises IncorrectDataException: Неверный email или пароль."""
         user = await self.user_repo.find_one(
-            ['id', 'email', 'role_id', 'hashed_password', 'is_first_login'],
+            ['id', 'email', 'name', 'role_id', 'hashed_password', 'is_first_login'],
             {'email': email}
         )
         if not user or not verify_password(password, user.hashed_password):
             raise IncorrectDataException('Неверный email или пароль')
 
         role = await self.role_repo.find_one(['name'], {'id': user.role_id})
-        payload = {'sub': str(user.id), 'role': role.name, 'is_first_login': user.is_first_login}
+        payload = {'sub': str(user.id), 'role': role.name}
+
+        access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
+        refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
+        response = TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            role=role.name,
+            name=user.name,
+            is_first_login=user.is_first_login
+        )
 
         if user.is_first_login:
             await self.user_repo.edit_one(user.id, {'is_first_login': False})
 
-        access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
-        refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
-
-        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+        return response
 
     async def refresh_token(self, refresh_token: str) -> TokenResponse:
         """Обновление Access- и Refresh- токенов на основе существующего Refresh токена.
