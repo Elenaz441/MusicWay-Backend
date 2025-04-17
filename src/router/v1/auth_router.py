@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from services import AuthService
 from typing import Annotated, Dict
-from schemas import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
+from schemas import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest, LoginResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config import settings
 from dependecies import get_auth_service, get_current_user
@@ -34,7 +34,7 @@ async def register(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.name))
 
 
-@router.post('/login', response_model=TokenResponse)
+@router.post('/login', response_model=LoginResponse)
 async def login(
         user_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         auth_service: Annotated[AuthService, Depends(get_auth_service)]

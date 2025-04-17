@@ -9,11 +9,13 @@ class ShortVariantResponse(PyBaseModel):
     id: UUID
     name: str
     image_url: str
-
-
-class VariantResponse(ShortVariantResponse):
     description: str
     demo_url: str
+
+
+class VariantResponse(PyBaseModel):
+    id: UUID
+    name: str
     settings: Dict[str, Any]
 
 

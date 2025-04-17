@@ -4,7 +4,7 @@ from uuid import UUID
 from datetime import datetime, timedelta, timezone
 
 from repositories import UserRepository, RoleRepository
-from schemas import UserRegister, TokenResponse
+from schemas import UserRegister, TokenResponse, LoginResponse
 from config import settings
 from utils import hash_password, verify_password
 from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException, InvalidTokenException
@@ -66,11 +66,12 @@ class AuthService:
             'surname': user_data.surname,
             'patronymic': user_data.patronymic,
             'birthdate': user_data.birthdate,
-            'role_id': role.id
+            'role_id': role.id,
+            'is_first_login': user_data.role != 'Ученик'
         }
         return await self.user_repo.add_one(new_user)
 
-    async def login_user(self, email: str, password: str) -> TokenResponse:
+    async def login_user(self, email: str, password: str) -> LoginResponse:
         """Авторизация пользователя.
 
         :param email: Email пользователя.
@@ -91,7 +92,7 @@ class AuthService:
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
-        response = TokenResponse(
+        response = LoginResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             role=role.name,

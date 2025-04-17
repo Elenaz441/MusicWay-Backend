@@ -25,7 +25,7 @@ async def get_variants(
 
     :return: Список вариантов по разделу
     """
-    return await variant_service.get_variants_by_block(block_id)
+    return await variant_service.get_variants_by_block(block_id, payload['role'])
 
 
 @router.get('/{variant_id}', response_model=VariantResponse)

@@ -33,6 +33,9 @@ class UserRegister(PyBaseModel):
 class TokenResponse(PyBaseModel):
     access_token: str
     refresh_token: str
+
+
+class LoginResponse(TokenResponse):
     role: str
     name: str
     is_first_login: bool
