@@ -11,12 +11,14 @@ router = APIRouter(tags=['Settings'])
 
 @router.get('', response_model=IntervalsSettingResponse)
 async def get_settings(
+        role: str,
         setting_service: Annotated[SettingService, Depends(get_setting_service)]
 ):
     """Получение всех настроек.
 
+    :param role: Роль пользователя.
     :param setting_service: Сервис настроек.
 
     :return: Список настроек для упражнения.
     """
-    return await setting_service.get_setting_by_name()
+    return await setting_service.get_setting_by_name(role)

@@ -1,10 +1,10 @@
 from .base import PyBaseModel
-from .setting import IntervalsSettingResponse
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 
-class CreateTaskSetting(IntervalsSettingResponse):
+class CreateTaskSetting(PyBaseModel):
+    intervals: List[str]
     count: Optional[int] = 1
 
 
