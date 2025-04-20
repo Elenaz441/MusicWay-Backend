@@ -20,7 +20,7 @@ class User(Base):
     birthdate: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     email: Mapped[str] = mapped_column(String(length=255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
-    is_first_login: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_changed_password: Mapped[bool] = mapped_column(Boolean, default=False)
     role_id: Mapped[UUID] = mapped_column(ForeignKey(Role.id, ondelete='RESTRICT'), nullable=False)
 
     role: Mapped[Role] = relationship(back_populates='users')

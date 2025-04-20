@@ -33,12 +33,9 @@ class UserRegister(PyBaseModel):
 class TokenResponse(PyBaseModel):
     access_token: str
     refresh_token: str
-
-
-class LoginResponse(TokenResponse):
     role: str
     name: str
-    is_first_login: bool
+    is_changed_password: bool
 
 
 class RefreshTokenRequest(PyBaseModel):
@@ -47,3 +44,18 @@ class RefreshTokenRequest(PyBaseModel):
 
 class ChangePasswordRequest(PyBaseModel):
     new_password: str = Field(min_length=8, max_length=30)
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_password(cls, value):
+        """Проверяет пароль по требованиям безопасности."""
+        if not re.search(r'[A-Z]', value):
+            raise ValueError('Пароль должен содержать хотя бы одну заглавную букву.')
+
+        if not re.search(r'\d', value):
+            raise ValueError('Пароль должен содержать хотя бы одну цифру.')
+
+        if not re.search(r'[~!?@#$%^&*\-_+()\[\]{}></\\|"\'.:,]', value):
+            raise ValueError('Пароль должен содержать хотя бы один специальный символ.')
+
+        return value

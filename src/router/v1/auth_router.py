@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from services import AuthService
 from typing import Annotated, Dict
-from schemas import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest, LoginResponse
+from schemas import UserRegister, TokenResponse, RefreshTokenRequest, ChangePasswordRequest
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config import settings
 from dependecies import get_auth_service, get_current_user
@@ -34,7 +34,7 @@ async def register(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.name))
 
 
-@router.post('/login', response_model=LoginResponse)
+@router.post('/login', response_model=TokenResponse)
 async def login(
         user_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         auth_service: Annotated[AuthService, Depends(get_auth_service)]
@@ -91,7 +91,7 @@ async def refresh_token(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.name))
 
 
-@router.delete('/logout')
+@router.delete('/logout', status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
         token: Annotated[str, Depends(oauth2_scheme)],
         payload: Annotated[Dict, Depends(get_current_user)],
@@ -105,7 +105,6 @@ async def logout(
 
     :return: Сообщение об успешном выходе."""
     await auth_service.invalidate_token(token)
-    return {'message': 'Вы успешно вышли из системы'}
 
 
 @router.patch('/change-password')

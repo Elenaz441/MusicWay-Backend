@@ -9,9 +9,9 @@ class UserAdmin(ModelView, model=User):
     """Административный интерфейс для управления пользователями."""
     name = 'Пользователь'
     name_plural = 'Пользователи'
-    column_list = [User.email, 'full_name', User.is_first_login, User.role]
+    column_list = [User.email, 'full_name', User.is_changed_password, User.role]
     column_details_list = [User.email, User.surname, User.name, User.patronymic,
-                           User.birthdate, User.is_first_login, User.role]
+                           User.birthdate, User.is_changed_password, User.role]
     form_columns = [User.email, User.surname, User.name, User.patronymic, User.birthdate, User.role]
     column_searchable_list = [User.surname, User.name, User.patronymic, User.birthdate, User.role]
     column_labels = {
@@ -21,7 +21,7 @@ class UserAdmin(ModelView, model=User):
         User.name: 'Имя',
         User.patronymic: 'Отчество',
         User.birthdate: 'Дата рождения',
-        User.is_first_login: 'Первая авторизация',
+        User.is_changed_password: 'Пароль сменен',
         User.role: 'Роль'
     }
 

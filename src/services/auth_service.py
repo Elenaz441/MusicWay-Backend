@@ -4,7 +4,7 @@ from uuid import UUID
 from datetime import datetime, timedelta, timezone
 
 from repositories import UserRepository, RoleRepository
-from schemas import UserRegister, TokenResponse, LoginResponse
+from schemas import UserRegister, TokenResponse
 from config import settings
 from utils import hash_password, verify_password
 from exceptions import NoRightsException, AlreadyExistsException, IncorrectDataException, InvalidTokenException
@@ -67,11 +67,11 @@ class AuthService:
             'patronymic': user_data.patronymic,
             'birthdate': user_data.birthdate,
             'role_id': role.id,
-            'is_first_login': user_data.role != 'Ученик'
+            'is_changed_password': user_data.role == 'Ученик'
         }
         return await self.user_repo.add_one(new_user)
 
-    async def login_user(self, email: str, password: str) -> LoginResponse:
+    async def login_user(self, email: str, password: str) -> TokenResponse:
         """Авторизация пользователя.
 
         :param email: Email пользователя.
@@ -81,7 +81,7 @@ class AuthService:
 
         :raises IncorrectDataException: Неверный email или пароль."""
         user = await self.user_repo.find_one(
-            ['id', 'email', 'name', 'role_id', 'hashed_password', 'is_first_login'],
+            ['id', 'email', 'name', 'role_id', 'hashed_password', 'is_changed_password'],
             {'email': email}
         )
         if not user or not verify_password(password, user.hashed_password):
@@ -92,16 +92,13 @@ class AuthService:
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
-        response = LoginResponse(
+        response = TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             role=role.name,
             name=user.name,
-            is_first_login=user.is_first_login
+            is_changed_password=user.is_changed_password
         )
-
-        if user.is_first_login:
-            await self.user_repo.edit_one(user.id, {'is_first_login': False})
 
         return response
 
@@ -123,7 +120,14 @@ class AuthService:
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
-        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+        user = await self.user_repo.find_one(['name', 'is_changed_password'], filter_by={'id': UUID(payload['sub'])})
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            role=payload['role'],
+            name=user.name,
+            is_changed_password=user.is_changed_password
+        )
 
     async def change_password(self, user_id: UUID, role_name: str, new_password: str):
         """Смена пароля преподавателя при первой авторизации.
@@ -136,7 +140,7 @@ class AuthService:
         if role_name not in ['Преподаватель', 'Админ']:
             raise NoRightsException()
         hashed_password = hash_password(new_password)
-        await self.user_repo.edit_one(user_id, {'hashed_password': hashed_password})
+        await self.user_repo.edit_one(user_id, {'hashed_password': hashed_password, 'is_changed_password': True})
 
     async def decode_jwt(self, token: str):
         """Декодирует JWT, проверяет срок действия и наличие в blacklist.

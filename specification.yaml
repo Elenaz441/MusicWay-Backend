@@ -1868,7 +1868,7 @@ components:
           type: string
         name:
           type: string
-        is_first_login:
+        is_change_password:
           type: boolean
       type: object
       required:
