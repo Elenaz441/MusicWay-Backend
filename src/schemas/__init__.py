@@ -1,5 +1,5 @@
 __all__ = [
-    'IntervalsSettingResponse',
+    'MelodySettingResponse',
     'CreateTaskSetting',
     'TaskResponse',
     'CheckTask',
@@ -8,5 +8,5 @@ __all__ = [
 ]
 
 
-from .setting import IntervalsSettingResponse
+from .setting import MelodySettingResponse
 from .task import CreateTaskSetting, TaskResponse, CheckTask, CheckTaskResponse, GetMarkTaskResponse

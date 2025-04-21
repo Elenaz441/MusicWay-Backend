@@ -1,30 +1,26 @@
-from repositories import SettingRepo
-from exceptions import NotFoundException
-from schemas import IntervalsSettingResponse
+from repositories import MelodyRepo
+from schemas import MelodySettingResponse
 
 
 class SettingService:
     """Сервис для работы с настройками."""
 
-    def __init__(self, repo: SettingRepo):
+    def __init__(self, repo: MelodyRepo):
         self.repo = repo
 
-    async def get_setting_by_name(self, role: str) -> IntervalsSettingResponse:
-        """Получает настройки по разделу (имени).
+    async def get_setting(self, role: str) -> MelodySettingResponse:
+        """Получает настройки.
 
         :param role: Роль пользователя.
 
         :return: Настройки.
         """
-        settings = await self.repo.find_one(['values'], name='Интервалы')
-        if not settings:
-            raise NotFoundException('setting', 'name')
-        description = 'Выбери интервалы, которые ты хочешь тренировать. Если ничего не выбирать, то будут все сразу.'
-        if role == 'Преподаватель':
-            description = 'Можете задать определённые простые интервалы, по умолчанию выбраны все:'
-        res = dict(settings)
-        return IntervalsSettingResponse(
+        melodies = await self.repo.find_all(['id', 'name'])
+        description = 'Выберите мелодии, которые хотите задать:'
+        if role != 'Преподаватель':
+            description = melodies = None
+        return MelodySettingResponse(
             description=description,
-            intervals=res['values'],
-            is_need_count=role == 'Преподаватель'
+            melodies=melodies,
+            is_need_count=False
         )

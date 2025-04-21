@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends
 
 from services import SettingService
 from typing import Annotated
-from schemas import IntervalsSettingResponse
+from schemas import MelodySettingResponse
 from dependecies import get_setting_service
 
 
 router = APIRouter(tags=['Settings'])
 
 
-@router.get('', response_model=IntervalsSettingResponse)
+@router.get('', response_model=MelodySettingResponse)
 async def get_settings(
         role: str,
         setting_service: Annotated[SettingService, Depends(get_setting_service)]
@@ -21,4 +21,4 @@ async def get_settings(
 
     :return: Список настроек для упражнения.
     """
-    return await setting_service.get_setting_by_name(role)
+    return await setting_service.get_setting(role)

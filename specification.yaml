@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: MusicWay. Singing
-  description: Спецификация для сервера, которые обрабатывает задания на пропевания.
+  title: MusicWay. Melody
+  description: Спецификация для сервера, которые обрабатывает задания на построение мелодии.
   version: 1.0.0
 
 tags:
@@ -17,13 +17,26 @@ paths:
         - Settings
       summary: Получение настроек
       description: Получение настроек упражнения.
+      parameters:
+        - name: role
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Role
       responses:
         '200':
           description: ОК
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntervalsSettingResponse'
+                $ref: '#/components/schemas/MelodySettingResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '500':
           description: Ошибка сервера
 
@@ -48,6 +61,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/TaskResponse'
                 type: array
+        '404':
+          description: Не найдена мелодия
         '422':
           description: Validation Error
           content:
@@ -76,8 +91,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CheckTaskResponse'
-        '400':
-          description: Ошибка в данных, которые отправил пользователь (например, с аудио)
+        '404':
+          description: Не найдена мелодия
         '422':
           description: Validation Error
           content:
@@ -106,8 +121,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetMarkTaskResponse'
-        '400':
-          description: Ошибка в данных, которые отправил пользователь (например, с аудио)
+        '404':
+          description: Не найдена мелодия
         '422':
           description: Validation Error
           content:
@@ -121,21 +136,13 @@ components:
   schemas:
     Answer:
       properties:
-        audio_url:
+        melody:
           type: string
-        note_1:
-          type: string
-          example: до
-          title: Note 1
-        note_2:
-          type: string
-          example: до
-          title: Note 2
+          format: uuid
+          title: Melody
       type: object
       required:
-        - audio_url
-        - note_1
-        - note_2
+        - melody
       title: Answer
 
     AnswerResponse:
@@ -143,25 +150,25 @@ components:
         audio_url:
           type: string
           title: Audio Url
+        image_url:
+          type: string
+          title: Image Url
       type: object
       required:
         - audio_url
+        - image_url
       title: AnswerResponse
 
     CheckData:
       properties:
-        audio_1:
-          type: string
-          title: Audio 1
-          description: Аудиозапись в зашифрованная в base64
-        audio_2:
-          type: string
-          title: Audio 2
-          description: Аудиозапись в зашифрованная в base64
+        notes:
+          items:
+            type: string
+          type: array
+          title: Notes
       type: object
       required:
-        - audio_1
-        - audio_2
+        - notes
       title: CheckData
 
     CheckTask:
@@ -189,29 +196,40 @@ components:
         - answer
       title: CheckTaskResponse
 
-    CreateTaskSetting:
+    Content:
       properties:
+        initial_note:
+          type: string
+          title: Initial Note
         intervals:
           items:
             type: string
           type: array
-          example: ['Все', 'м.2', 'б.2']
           title: Intervals
-        count:
-          type: integer
-          nullable: true
-          title: Count
-          default: 1
       type: object
       required:
+        - initial_note
         - intervals
+      title: Content
+
+    CreateTaskSetting:
+      properties:
+        melodies:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Melodies
+      type: object
+      required:
+        - melodies
       title: CreateTaskSetting
 
     GetMarkTaskResponse:
       properties:
         mark:
           type: integer
-          example: 1
+          example: 7
           title: Mark
       type: object
       required:
@@ -228,46 +246,67 @@ components:
       type: object
       title: HTTPValidationError
 
-    IntervalsSettingResponse:
+    MelodyResponse:
       properties:
-        intervals:
-          items:
-            type: string
-          type: array
-          example: ['Все', 'м.2', 'б.2']
-          title: Intervals
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
       type: object
       required:
-        - intervals
-      title: IntervalsSettingResponse
+        - id
+        - name
+      title: MelodyResponse
+
+    MelodySettingResponse:
+      properties:
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Description
+        melodies:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/MelodyResponse'
+              type: array
+            - type: 'null'
+          title: Melodies
+        is_need_count:
+          type: boolean
+          title: Is Need Count
+      type: object
+      required:
+        - description
+        - melodies
+        - is_need_count
+      title: MelodySettingResponse
 
     TaskResponse:
       properties:
         condition:
           type: string
           title: Condition
-          example: Пропой восходящий интервал ч.1 от ноты до
         content:
-          type: object
-          title: Content
-          default: {}
-          nullable: true
+          $ref: '#/components/schemas/Content'
         answer:
           $ref: '#/components/schemas/Answer'
         max_mark:
           type: integer
-          example: 1
           title: Max Mark
         query:
           type: string
-          nullable: true
-          example: ч.1
           title: Query
       type: object
       required:
         - condition
+        - content
         - answer
         - max_mark
+        - query
       title: TaskResponse
 
     ValidationError:

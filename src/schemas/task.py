@@ -1,33 +1,37 @@
 from .base import PyBaseModel
 
-from typing import Optional, Dict, Any, List
+from typing import List, Optional
+from uuid import UUID
 
 
 class CreateTaskSetting(PyBaseModel):
-    intervals: List[str]
-    count: Optional[int] = 1
+    melodies: Optional[List[UUID]] = None
 
 
 class AnswerResponse(PyBaseModel):
     audio_url: str
+    image_url: str
 
 
-class Answer(AnswerResponse):
-    note_1: str
-    note_2: str
+class Answer(PyBaseModel):
+    melody: UUID
+
+
+class Content(PyBaseModel):
+    initial_note: str
+    intervals: List[str]
 
 
 class TaskResponse(PyBaseModel):
     condition: str
-    content: Optional[Dict[str, Any]] = {}
+    content: Content
     answer: Answer
     max_mark: int
-    query: Optional[str] = None
+    query: str
 
 
 class CheckData(PyBaseModel):
-    audio_1: str
-    audio_2: str
+    notes: List[str]
 
 
 class CheckTask(PyBaseModel):

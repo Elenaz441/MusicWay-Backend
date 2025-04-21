@@ -1,9 +1,7 @@
 __all__ = (
     'Base',
-    'Audio',
-    'Setting'
+    'Melody',
 )
 
 from .base import Base
-from .audio import Audio
-from .setting import Setting
+from .melody import Melody

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from services import TaskService
 from typing import Annotated, List
 from schemas import CreateTaskSetting, TaskResponse, CheckTask, CheckTaskResponse, GetMarkTaskResponse
 from dependecies import get_task_service
+from exceptions import NotFoundException
 
 
 router = APIRouter(tags=['Tasks'])
@@ -21,7 +22,10 @@ async def create_tasks(
 
     :return: Список созданных упражнений.
     """
-    return await task_service.create_task(data)
+    try:
+        return await task_service.create_task(data)
+    except NotFoundException as e:
+        raise HTTPException(detail=str(e.name), status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.post('/check', response_model=CheckTaskResponse)
@@ -36,7 +40,10 @@ async def check_tasks(
 
     :return: Результат проверки.
     """
-    return await task_service.check_task(data)
+    try:
+        return await task_service.check_task(data)
+    except NotFoundException as e:
+        raise HTTPException(detail=str(e.name), status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.post('/get-mark', response_model=GetMarkTaskResponse)
@@ -51,4 +58,7 @@ async def get_mark(
 
     :return: Балл за упражнение.
     """
-    return await task_service.get_mark(data)
+    try:
+        return await task_service.get_mark(data)
+    except NotFoundException as e:
+        raise HTTPException(detail=str(e.name), status_code=status.HTTP_404_NOT_FOUND)

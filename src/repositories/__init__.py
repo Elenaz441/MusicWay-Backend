@@ -1,8 +1,6 @@
 __all__ = [
-    'AudioRepo',
-    'SettingRepo'
+    'MelodyRepo'
 ]
 
 
-from .audio_repo import AudioRepo
-from .setting_repo import SettingRepo
+from .melody_repo import MelodyRepo
