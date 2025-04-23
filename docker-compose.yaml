@@ -3,7 +3,7 @@ version: "3.9"
 services:
   db:
     image: postgres:12-alpine
-    container_name: db-sing
+    container_name: db-ear
     restart: always
     ports:
       - "5433:5432"
@@ -12,20 +12,20 @@ services:
       - POSTGRES_USER=$POSTGRES_USER
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
     networks:
-      - app-sing
+      - app-ear
 
   adminer:
     image: adminer
-    container_name: adminer-sing
+    container_name: adminer-ear
     restart: always
     ports:
       - "1235:8080"
     networks:
-      - app-sing
+      - app-ear
 
   app:
     build: .
-    container_name: app-singing
+    container_name: app-ear
     restart: always
     ports:
       - "8001:8000"
@@ -34,7 +34,7 @@ services:
     depends_on:
       - db
     networks:
-      - app-sing
+      - app-ear
 
 networks:
-  app-sing:
+  app-ear:

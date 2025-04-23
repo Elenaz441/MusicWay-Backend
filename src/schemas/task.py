@@ -1,6 +1,6 @@
 from .base import PyBaseModel
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, List
 
 
 class CreateTaskSetting(PyBaseModel):
@@ -9,35 +9,51 @@ class CreateTaskSetting(PyBaseModel):
 
 
 class AnswerResponse(PyBaseModel):
-    audio_url: str
+    pass
 
 
 class Answer(AnswerResponse):
-    note_1: str
-    note_2: str
+    audio_url: str
+    interval: str
+
+
+class Content(PyBaseModel):
+    image_url: str
+    image_name: str
+    audio_urls: List[str]
+    intervals: List[str]
 
 
 class TaskResponse(PyBaseModel):
     condition: str
-    content: Optional[Dict[str, Any]] = {}
-    answer: Answer
+    content: Content
+    answer: List[Answer]
     max_mark: int
     query: Optional[str] = None
 
 
 class CheckData(PyBaseModel):
-    audio_1: str
-    audio_2: str
+    audio_number: int
+    interval: str
 
 
 class CheckTask(PyBaseModel):
     check_data: CheckData
-    answer: Answer
+    answer: List[Answer]
 
 
 class CheckTaskResponse(PyBaseModel):
     is_right: bool
-    answer: AnswerResponse
+    answer: Optional[AnswerResponse] = None
+
+
+class MistakesCount(PyBaseModel):
+    mistakes_count: int
+
+
+class MarkRequest(PyBaseModel):
+    check_data: MistakesCount
+    answer: List[Answer]
 
 
 class GetMarkTaskResponse(PyBaseModel):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from services import TaskService
 from typing import Annotated, List
-from schemas import CreateTaskSetting, TaskResponse, CheckTask, CheckTaskResponse, GetMarkTaskResponse
+from schemas import CreateTaskSetting, TaskResponse, CheckTask, CheckTaskResponse, GetMarkTaskResponse, MarkRequest
 from dependecies import get_task_service
 
 
@@ -41,7 +41,7 @@ async def check_tasks(
 
 @router.post('/get-mark', response_model=GetMarkTaskResponse)
 async def get_mark(
-        data: CheckTask,
+        data: MarkRequest,
         task_service: Annotated[TaskService, Depends(get_task_service)]
 ):
     """Выставляет балл за упражнение.

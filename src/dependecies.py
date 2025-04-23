@@ -1,6 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from repositories import SettingRepo, AudioRepo
+from repositories import SettingRepo, AudioRepo, ImageRepo
 from services import SettingService, TaskService
 from database import get_async_session
 from typing import Annotated
@@ -17,4 +17,4 @@ async def get_task_service(
     db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> TaskService:
     """Глобальная зависимость для TaskService."""
-    return TaskService(AudioRepo(db), SettingRepo(db))
+    return TaskService(ImageRepo(db), AudioRepo(db), SettingRepo(db))

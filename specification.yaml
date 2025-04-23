@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: MusicWay. Singing
-  description: Спецификация для сервера, которые обрабатывает задания на пропевания.
+  title: MusicWay. Ear
+  description: Спецификация для сервера, который обрабатывает задания на определение на слух.
   version: 1.0.0
 
 tags:
@@ -17,6 +17,13 @@ paths:
         - Settings
       summary: Получение настроек
       description: Получение настроек упражнения.
+      parameters:
+        - name: role
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Role
       responses:
         '200':
           description: ОК
@@ -24,6 +31,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IntervalsSettingResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '500':
           description: Ошибка сервера
 
@@ -77,7 +90,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CheckTaskResponse'
         '400':
-          description: Ошибка в данных, которые отправил пользователь (например, с аудио)
+          description: Ошибка в данных, которые отправил пользователь
         '422':
           description: Validation Error
           content:
@@ -97,7 +110,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CheckTask'
+              $ref: '#/components/schemas/MarkRequest'
         required: true
       responses:
         '200':
@@ -107,7 +120,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetMarkTaskResponse'
         '400':
-          description: Ошибка в данных, которые отправил пользователь (например, с аудио)
+          description: Ошибка в данных, которые отправил пользователь
         '422':
           description: Validation Error
           content:
@@ -123,45 +136,33 @@ components:
       properties:
         audio_url:
           type: string
-        note_1:
+          title: Audio Url
+        interval:
           type: string
-          example: до
-          title: Note 1
-        note_2:
-          type: string
-          example: до
-          title: Note 2
+          title: Interval
       type: object
       required:
         - audio_url
-        - note_1
-        - note_2
+        - interval
       title: Answer
 
     AnswerResponse:
-      properties:
-        audio_url:
-          type: string
-          title: Audio Url
+      properties: {}
       type: object
-      required:
-        - audio_url
       title: AnswerResponse
 
     CheckData:
       properties:
-        audio_1:
+        audio_number:
+          type: integer
+          title: Audio Number
+        interval:
           type: string
-          title: Audio 1
-          description: Аудиозапись в зашифрованная в base64
-        audio_2:
-          type: string
-          title: Audio 2
-          description: Аудиозапись в зашифрованная в base64
+          title: Interval
       type: object
       required:
-        - audio_1
-        - audio_2
+        - audio_number
+        - interval
       title: CheckData
 
     CheckTask:
@@ -169,7 +170,10 @@ components:
         check_data:
           $ref: '#/components/schemas/CheckData'
         answer:
-          $ref: '#/components/schemas/Answer'
+          items:
+            $ref: '#/components/schemas/Answer'
+          type: array
+          title: Answer
       type: object
       required:
         - check_data
@@ -182,12 +186,39 @@ components:
           type: boolean
           title: Is Right
         answer:
-          $ref: '#/components/schemas/AnswerResponse'
+          anyOf:
+            - $ref: '#/components/schemas/AnswerResponse'
+            - type: 'null'
       type: object
       required:
         - is_right
-        - answer
       title: CheckTaskResponse
+
+    Content:
+      properties:
+        image_url:
+          type: string
+          title: Image Url
+        image_name:
+          type: string
+          title: Image Name
+        audio_urls:
+          items:
+            type: string
+          type: array
+          title: Audio Urls
+        intervals:
+          items:
+            type: string
+          type: array
+          title: Intervals
+      type: object
+      required:
+        - image_url
+        - image_name
+        - audio_urls
+        - intervals
+      title: Content
 
     CreateTaskSetting:
       properties:
@@ -195,11 +226,11 @@ components:
           items:
             type: string
           type: array
-          example: ['Все', 'м.2', 'б.2']
           title: Intervals
         count:
-          type: integer
-          nullable: true
+          anyOf:
+            - type: integer
+            - type: 'null'
           title: Count
           default: 1
       type: object
@@ -230,42 +261,74 @@ components:
 
     IntervalsSettingResponse:
       properties:
+        description:
+          type: string
+          title: Description
         intervals:
           items:
             type: string
           type: array
           example: ['Все', 'м.2', 'б.2']
           title: Intervals
+        is_need_count:
+          type: boolean
+          title: Is Need Count
       type: object
       required:
+        - description
         - intervals
+        - is_need_count
       title: IntervalsSettingResponse
+
+    MarkRequest:
+      properties:
+        check_data:
+          $ref: '#/components/schemas/MistakesCount'
+        answer:
+          items:
+            $ref: '#/components/schemas/Answer'
+          type: array
+          title: Answer
+      type: object
+      required:
+        - check_data
+        - answer
+      title: MarkRequest
+
+    MistakesCount:
+      properties:
+        mistakes_count:
+          type: integer
+          title: Mistakes Count
+      type: object
+      required:
+        - mistakes_count
+      title: MistakesCount
 
     TaskResponse:
       properties:
         condition:
           type: string
           title: Condition
-          example: Пропой восходящий интервал ч.1 от ноты до
         content:
-          type: object
-          title: Content
-          default: {}
-          nullable: true
+          $ref: '#/components/schemas/Content'
         answer:
-          $ref: '#/components/schemas/Answer'
+          items:
+            $ref: '#/components/schemas/Answer'
+          type: array
+          title: Answer
         max_mark:
           type: integer
-          example: 1
           title: Max Mark
         query:
-          type: string
-          nullable: true
-          example: ч.1
+          anyOf:
+            - type: string
+            - type: 'null'
           title: Query
       type: object
       required:
         - condition
+        - content
         - answer
         - max_mark
       title: TaskResponse

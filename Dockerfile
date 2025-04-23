@@ -6,13 +6,7 @@ COPY ./requirements.txt /code/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-RUN git clone https://github.com/aubio/aubio.git && \
-    cd aubio && \
-    python setup.py build_ext --inplace && \
-    python setup.py install && \
-    cd ..
-
-RUN apt-get update && apt-get install -y ffmpeg netcat-openbsd
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 COPY ./src /code/src
 

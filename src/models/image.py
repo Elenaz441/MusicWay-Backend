@@ -7,13 +7,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
 
-class Audio(Base):
-    """Модель аудиозаписи"""
-    __tablename__ = 'audio'
+class Image(Base):
+    """Модель изображения"""
+    __tablename__ = 'image'
 
     id: Mapped[UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid4)
-    interval: Mapped[str] = mapped_column(String(length=50), nullable=False)
+    name: Mapped[str] = mapped_column(String(length=50), nullable=False)
     url: Mapped[str] = mapped_column(Text, nullable=False)
 
     def __str__(self):
-        return f'interval = {self.interval}, url = {self.url}'
+        return f'name = {self.name}'
