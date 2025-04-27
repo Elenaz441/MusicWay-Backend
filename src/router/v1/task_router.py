@@ -11,7 +11,7 @@ from exceptions import NotFoundException, NoRightsException
 router = APIRouter(tags=['Task'])
 
 
-@router.post('', response_model=UUID)
+@router.post('', response_model=TaskResponse)
 async def create_task(
         data: VariantForCreateTask,
         payload: Annotated[Dict, Depends(get_current_user)],
@@ -25,7 +25,7 @@ async def create_task(
 
     :return: Идентификатор нового упражнения.
     """
-    return await task_service.create_task(data)
+    return await task_service.create_task(data, payload['role'])
 
 
 @router.get('/{task_id}', response_model=TaskResponse)

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from uuid import UUID
 
 from services import VariantService
-from typing import Annotated, Dict, List
-from schemas import ShortVariantResponse, VariantResponse
+from typing import Annotated, Dict, List, Optional
+from schemas import VariantListResponse, VariantResponse
 from dependecies import get_current_user, get_variant_service
 from exceptions import NotFoundException
 
@@ -11,11 +11,11 @@ from exceptions import NotFoundException
 router = APIRouter(tags=['Variant'])
 
 
-@router.get('', response_model=List[ShortVariantResponse])
+@router.get('', response_model=List[VariantListResponse])
 async def get_variants(
-        block_id: UUID,
         payload: Annotated[Dict, Depends(get_current_user)],
-        variant_service: Annotated[VariantService, Depends(get_variant_service)]
+        variant_service: Annotated[VariantService, Depends(get_variant_service)],
+        block_id: Optional[UUID] = None
 ):
     """Получение всех вариантов по разделу.
 

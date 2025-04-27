@@ -3,6 +3,7 @@ import string
 import bcrypt
 import httpx
 from typing import Sequence, Dict, Any, Optional
+from fastapi import HTTPException, status
 
 
 def generate_valid_string():
@@ -52,6 +53,8 @@ async def send_query(method: str, url: str, data: Optional[Dict[str, Any]] = Non
     """
     async with httpx.AsyncClient() as client:
         response = await client.request(method=method, url=url, json=data, headers={'Content-Type': 'application/json'})
+    if response.status_code != 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=response.json())
     return response.json()
 
 

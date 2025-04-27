@@ -62,7 +62,12 @@ async def get_topic_block_service(
     db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> TopicBlockService:
     """Глобальная зависимость для TopicBlockService."""
-    return TopicBlockService(TopicBlockRepository(db), StudentClassRepository(db), HomeworkRepository(db))
+    return TopicBlockService(
+        TopicBlockRepository(db),
+        StudentClassRepository(db),
+        HomeworkRepository(db),
+        VariantRepository(db)
+    )
 
 
 async def get_material_service(
@@ -83,7 +88,7 @@ async def get_variant_service(
         db: Annotated[AsyncSession, Depends(get_async_session)]
 ) -> VariantService:
     """Глобальная зависимость VariantService."""
-    return VariantService(VariantRepository(db), TaskTypeRepository(db))
+    return VariantService(VariantRepository(db), TaskTypeRepository(db), TopicBlockRepository(db))
 
 
 async def get_task_service(

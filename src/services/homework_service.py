@@ -67,7 +67,7 @@ class HomeworkService:
         :param user_id: Идентификатор пользователя.
         :param role: Роль пользователя.
 
-        :return: Информация об автикном домашнем задании.
+        :return: Информация об активном домашнем задании.
 
         :raises NoRightsException: Нет прав.
         :raises IncorrectDataException: Задание уже завершено.
@@ -212,6 +212,7 @@ class HomeworkService:
         }
 
         task_ids = []
+        number = 1
 
         for variant in homework.variants:
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': variant.variant_id})
@@ -221,7 +222,7 @@ class HomeworkService:
                 f'{task_type_url.service_url}/tasks',
                 variant.settings
             )
-            for number, task in enumerate(tasks, 1):
+            for task in tasks:
                 material_id = await self.material_repo.find_all(
                     ['id'],
                     filter_by={'search_vector': task['query']},
@@ -238,6 +239,7 @@ class HomeworkService:
                 }
                 task_id = await self.task_repo.add_one(new_task)
                 task_ids.append(task_id)
+                number += 1
 
         student_ids = await self.student_class_repo.find_all(['student_id'], {'class_id': homework.class_id})
         homework_id = await self.homework_repo.add_one(new_homework)
@@ -331,7 +333,7 @@ class HomeworkService:
         :param homework_id: Идентификатор домашнего задания.
         :param role: Роль пользователя.
 
-        :return: Список стастики по каждому варианту упражнений.
+        :return: Список статистики по каждому варианту упражнений.
 
         :raises NoRightsException: Нет прав.
         """

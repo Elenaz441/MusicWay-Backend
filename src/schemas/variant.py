@@ -13,9 +13,16 @@ class ShortVariantResponse(PyBaseModel):
     demo_url: str
 
 
+class VariantListResponse(PyBaseModel):
+    block_name: str
+    variants: List[ShortVariantResponse]
+
+
 class VariantResponse(PyBaseModel):
     id: UUID
     name: str
+    description: str
+    demo_url: str
     settings: Dict[str, Any]
 
 

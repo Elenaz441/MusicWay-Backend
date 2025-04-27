@@ -22,5 +22,5 @@ class UserInfo(PyBaseModel):
 
 
 class UserStatistic(PyBaseModel):
-    success_rate: int
+    success_rate: Optional[int]
     topic_blocks: List[TopicBlockResponse]

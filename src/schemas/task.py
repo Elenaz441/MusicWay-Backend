@@ -30,7 +30,7 @@ class TaskSubmit(PyBaseModel):
 
 class TaskAnswer(PyBaseModel):
     is_right: bool
-    answer: Dict[str, Any]
+    answer: Optional[Dict[str, Any]] = None
 
 
 class TaskHomeworkSubmit(PyBaseModel):

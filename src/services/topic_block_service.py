@@ -2,6 +2,7 @@ from repositories import (
     TopicBlockRepository,
     StudentClassRepository,
     HomeworkRepository,
+    VariantRepository
 )
 from schemas import TopicBlockResponse, VariantStatistic
 from exceptions import NoRightsException, NotFoundException
@@ -17,10 +18,12 @@ class TopicBlockService:
             block_repo: TopicBlockRepository,
             student_class_repo: StudentClassRepository,
             homework_repo: HomeworkRepository,
+            variant_repo: VariantRepository
     ):
         self.block_repo = block_repo
         self.student_class_repo = student_class_repo
         self.homework_repo = homework_repo
+        self.variant_repo = variant_repo
 
     async def get_blocks(self) -> List[TopicBlockResponse]:
         """Получает все разделы.
@@ -51,10 +54,15 @@ class TopicBlockService:
         homeworks = await self.homework_repo.find_all_completed(
             {'class_id': class_id.class_id, 'student_id': user_id, 'block_id': block_id}
         )
+        variants = await self.variant_repo.find_all_by_block(block_id, ['name'])
         result = {}
         for hw in homeworks:
             hw_tasks = await self.homework_repo.get_marks(hw.id, user_id)
             result = calculate_statistic(hw_tasks, result)
+
+        for variant in variants:
+            if variant.name not in result:
+                result[variant.name] = {'name': variant.name, 'student_mark': 0, 'max_mark': 1}
 
         return [
             VariantStatistic(

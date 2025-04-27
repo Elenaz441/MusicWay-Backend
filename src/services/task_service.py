@@ -81,15 +81,16 @@ class TaskService:
             raise NotFoundException('упражнение', 'task_number')
         return await self._take_task(result, role)
 
-    async def create_task(self, data: VariantForCreateTask) -> UUID:
+    async def create_task(self, data: VariantForCreateTask, role: str) -> TaskResponse:
         """Создание упражнения для тренажёра.
 
         :param data: Данные для создания упражнения.
+        :param role: Роль пользователя
 
         :return: Идентификатор созданного упражнения.
         """
-        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': data.variant_id})
-        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+        variant = await self.variant_repo.find_one(['task_type_id', 'name'], {'id': data.variant_id})
+        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': variant.task_type_id})
         response = await send_query(
             'POST',
             f'{task_type_url.service_url}/tasks',
@@ -103,7 +104,12 @@ class TaskService:
             'max_mark': task['max_mark'],
             'variant_id': data.variant_id,
         }
-        return await self.task_repo.add_one(new_task)
+        task_id = await self.task_repo.add_one(new_task)
+        result = await self.task_repo.find_one(
+            ['id', 'variant_id', 'condition', 'content'],
+            {'id': task_id}
+        )
+        return await self._take_task(result, role)
 
     async def check_task(self, task_id: UUID, data: TaskSubmit) -> TaskAnswer:
         """Проверка упражнения.
@@ -126,7 +132,6 @@ class TaskService:
             f'{task_type_url.service_url}/tasks/check',
             {'check_data': data.check_data, 'answer': task.answer}
         )
-        is_right = response['is_right']
         if not task.is_study_task and data.delete_it:
             await self.task_repo.delete_one(task_id)
-        return TaskAnswer(is_right=is_right, answer=task.answer)
+        return TaskAnswer(is_right=response['is_right'], answer=response['answer'])
