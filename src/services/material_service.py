@@ -2,7 +2,7 @@ from repositories import MaterialRepository, TaskRepository
 from uuid import UUID
 from typing import List
 from exceptions import NotFoundException
-from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, VariantForActiveTask
+from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, MaterialTasksResponse, VariantForActiveTask
 
 
 class MaterialService:
@@ -20,7 +20,7 @@ class MaterialService:
         :return: Список материалов по данному разделу.
         """
         materials = await self.material_repo.find_all(
-            ['id', 'name'],
+            ['id', 'name', 'number'],
             filter_by={'block_id': block_id},
             order_by='number'
         )
@@ -36,10 +36,10 @@ class MaterialService:
 
         :raises NotFoundException: Если указанный материал не найден.
         """
-        result = await self.material_repo.find_one(['video_url'], {'id': material_id})
+        result = await self.material_repo.find_one(['name', 'video_url'], {'id': material_id})
         if not result:
             raise NotFoundException('учебный материал', 'id')
-        return MaterialVideoResponse(video_url=result['video_url'])
+        return MaterialVideoResponse(name=result['name'], video_url=result['video_url'])
 
     async def get_text(self, material_id: UUID) -> MaterialTextResponse:
         """Получает текст по идентификатору.
@@ -50,12 +50,12 @@ class MaterialService:
 
         :raises NotFoundException: Если указанный материал не найден.
         """
-        result = await self.material_repo.find_one(['text'], {'id': material_id})
+        result = await self.material_repo.find_one(['name', 'text'], {'id': material_id})
         if not result:
             raise NotFoundException('учебный материал', 'id')
-        return MaterialTextResponse(text=result['text'])
+        return MaterialTextResponse(name=result['name'], text=result['text'])
 
-    async def get_tasks(self, material_id: UUID) -> List[VariantForActiveTask]:
+    async def get_tasks(self, material_id: UUID) -> MaterialTasksResponse:
         """Получает задания, относящиеся к разделу
 
         :param material_id: Идентификатор учебного материала.
@@ -64,12 +64,12 @@ class MaterialService:
 
         :raises NotFoundException: Если указанный материал не найден.
         """
-        check = await self.material_repo.find_one(['id'], {'id': material_id})
+        check = await self.material_repo.find_one(['name'], {'id': material_id})
         if not check:
             raise NotFoundException('учебный материал', 'id')
         tasks = await self.task_repo.find_all_by_material(material_id)
         tasks = [VariantForActiveTask.model_validate(task) for task in tasks]
-        return tasks
+        return MaterialTasksResponse(name=check.name, variants=tasks)
 
     async def search_materials(self, query: str, limit: int = 5) -> List[ShortMaterialResponse]:
         """Полнотекстовый поиск по учебным материалам.
@@ -79,7 +79,7 @@ class MaterialService:
 
         :return: Список учебных материалов.
         """
-        materials = await self.material_repo.find_all(['id', 'name'], filter_by={'search_vector': query}, limit=limit)
+        materials = await self.material_repo.find_all(['id', 'name', 'number'], filter_by={'search_vector': query}, limit=limit)
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
 

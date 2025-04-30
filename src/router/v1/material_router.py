@@ -3,7 +3,7 @@ from uuid import UUID
 
 from services import MaterialService
 from typing import Annotated, List, Dict
-from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, VariantForActiveTask
+from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, MaterialTasksResponse
 from dependecies import get_current_user, get_material_service
 from exceptions import NotFoundException
 
@@ -69,7 +69,7 @@ async def get_material_text(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e.name))
 
 
-@router.get('/{material_id}/tasks', response_model=List[VariantForActiveTask])
+@router.get('/{material_id}/tasks', response_model=MaterialTasksResponse)
 async def get_material_tasks(
         material_id: UUID,
         payload: Annotated[Dict, Depends(get_current_user)],
