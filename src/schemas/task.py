@@ -17,10 +17,15 @@ class Answer(AnswerResponse):
     interval: str
 
 
+class AudioContent(PyBaseModel):
+    audio_url: str
+    number: int
+
+
 class Content(PyBaseModel):
     image_url: str
     image_name: str
-    audio_urls: List[str]
+    audio_urls: List[AudioContent]
     intervals: List[str]
 
 

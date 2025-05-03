@@ -38,9 +38,9 @@ class TaskService:
 
             audios = []
             answer = []
-            for interval in selected:
+            for j, interval in enumerate(selected):
                 audio = await self.audio_repo.find_random_audio(['interval', 'url'], interval=interval)
-                audios.append(audio.url)
+                audios.append({'audio_url': audio.url, 'number': j})
                 answer.append({'audio_url': audio.url, 'interval': interval})
             random.shuffle(selected)
             task['content'] = {
