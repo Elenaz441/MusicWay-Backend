@@ -29,10 +29,12 @@ class VariantService:
         for block in blocks:
             variants = await self.variant_repo.find_all_by_block(
                 block.id,
-                ['id', 'name', 'image_url', 'student_description', 'teacher_description', 'demo_url']
+                ['id', 'name', 'image_url', 'student_description', 'teacher_description', 'demo_url', 'for_homework']
             )
             variant_list = []
             for variant in variants:
+                if not variant.for_homework and role == 'Преподаватель':
+                    continue
                 variant_dict = dict(variant)
                 variant_dict['description'] = variant.student_description if role == 'Ученик' else variant.teacher_description
                 variant_list.append(ShortVariantResponse.model_validate(variant_dict))

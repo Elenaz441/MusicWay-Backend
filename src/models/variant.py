@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 
 import sqlalchemy as alchemy
-from sqlalchemy import String, ForeignKey, Text
+from sqlalchemy import String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from storage import FileType
@@ -20,6 +20,7 @@ class Variant(Base):
     teacher_description: Mapped[str] = mapped_column(Text, nullable=False)
     image_url: Mapped[str] = mapped_column(FileType('variants'), nullable=False)
     demo_url: Mapped[str] = mapped_column(FileType('variants'), nullable=False)
+    for_homework: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     task_type: Mapped[TaskType] = relationship(back_populates='variants')
     tasks: Mapped[list['Task']] = relationship(back_populates='variant')
