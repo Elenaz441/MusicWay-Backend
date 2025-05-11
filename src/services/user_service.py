@@ -33,14 +33,14 @@ class UserService:
         class_id = await self.student_class_repo.find_one(['class_id'], {'student_id': user_id})
         if not class_id:
             raise NotFoundException('класс', 'user_id')
-        tasks = await self.homework_repo.find_all_completed({'class_id': class_id.class_id, 'student_id': user_id})
+        tasks = await self.homework_repo.find_all_completed({'class_id': class_id['class_id'], 'student_id': user_id})
         if len(tasks) == 0:
             return UserStatistic(success_rate=None, topic_blocks=blocks)
         student_mark = 0
         max_mark = 0
         for task in tasks:
-            student_mark += task.student_mark
-            max_mark += task.max_mark
+            student_mark += task['student_mark']
+            max_mark += task['max_mark']
         if max_mark != 0:
             success_rate = student_mark * 100 // max_mark
         else:

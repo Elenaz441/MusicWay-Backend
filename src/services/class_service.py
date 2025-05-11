@@ -56,20 +56,23 @@ class ClassService:
         )
         if learning_class is None:
             raise NotFoundException('class', 'id')
-        if learning_class.teacher_id != teacher_id:
+        if learning_class['teacher_id'] != teacher_id:
             raise NoRightsException()
         student_ids = await self.students_repo.find_all(['student_id'], {'class_id': class_id})
         students = [
             await self.user_repo.find_one(
                 ['id', 'name', 'surname', 'patronymic'],
-                {'id': s.student_id}
+                {'id': s['student_id']}
             ) for s in student_ids
         ]
         if len(students) == 0:
             homeworks = []
         else:
-            homeworks = await self.homework_repo.find_all_active(class_id, students[0].id)
-        result = dict(learning_class)
+            homeworks = await self.homework_repo.find_all_active(class_id)
+            for i in range(len(homeworks)):
+                homeworks[i]['max_mark'] //= len(students)
+                homeworks[i]['count'] //= len(students)
+        result = learning_class
         result['students'] = students
         result['active_homeworks'] = homeworks
         return ClassResponse.model_validate(result)
@@ -94,7 +97,7 @@ class ClassService:
         )
         if learning_class is None:
             raise NotFoundException('class', 'id')
-        if learning_class.teacher_id != teacher_id:
+        if learning_class['teacher_id'] != teacher_id:
             raise NoRightsException()
         tasks = await self.homework_repo.find_all_completed({'class_id': class_id})
         return [ShortLastHWTeacher.model_validate(task) for task in tasks]

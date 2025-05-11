@@ -1,7 +1,7 @@
-from sqlalchemy import select, RowMapping
+from sqlalchemy import select
 from models import Variant, TaskType
 from .sqlalchemy_repo import SQLAlchemyRepository
-from typing import Sequence, List
+from typing import List, Dict, Any
 from uuid import UUID
 
 
@@ -10,7 +10,7 @@ class VariantRepository(SQLAlchemyRepository):
 
     model = Variant
 
-    async def find_all_by_block(self, block_id: UUID, fields: List[str]) -> Sequence[RowMapping]:
+    async def find_all_by_block(self, block_id: UUID, fields: List[str]) -> List[Dict[str, Any]]:
         """Получает варианты упражнений для указанного тематического блока.
 
         :param block_id: Идентификатор тематического блока
@@ -20,4 +20,4 @@ class VariantRepository(SQLAlchemyRepository):
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns).join(TaskType).where(block_id == TaskType.block_id)
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]

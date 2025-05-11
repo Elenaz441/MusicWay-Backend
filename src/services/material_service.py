@@ -2,7 +2,13 @@ from repositories import MaterialRepository, TaskRepository
 from uuid import UUID
 from typing import List
 from exceptions import NotFoundException
-from schemas import ShortMaterialResponse, MaterialVideoResponse, MaterialTextResponse, MaterialTasksResponse, VariantForActiveTask
+from schemas import (
+    ShortMaterialResponse,
+    MaterialVideoResponse,
+    MaterialTextResponse,
+    MaterialTasksResponse,
+    VariantForActiveTask
+)
 
 
 class MaterialService:
@@ -65,11 +71,12 @@ class MaterialService:
         :raises NotFoundException: Если указанный материал не найден.
         """
         check = await self.material_repo.find_one(['name'], {'id': material_id})
+        print(check)
         if not check:
             raise NotFoundException('учебный материал', 'id')
         tasks = await self.task_repo.find_all_by_material(material_id)
         tasks = [VariantForActiveTask.model_validate(task) for task in tasks]
-        return MaterialTasksResponse(name=check.name, variants=tasks)
+        return MaterialTasksResponse(name=check['name'], variants=tasks)
 
     async def search_materials(self, query: str, limit: int = 5) -> List[ShortMaterialResponse]:
         """Полнотекстовый поиск по учебным материалам.
@@ -79,7 +86,9 @@ class MaterialService:
 
         :return: Список учебных материалов.
         """
-        materials = await self.material_repo.find_all(['id', 'name', 'number'], filter_by={'search_vector': query}, limit=limit)
+        materials = await self.material_repo.find_all(
+            ['id', 'name', 'number'],
+            filter_by={'search_vector': query},
+            limit=limit)
         result = [ShortMaterialResponse.model_validate(rec) for rec in materials]
         return result
-

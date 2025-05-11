@@ -66,7 +66,7 @@ class AuthService:
             'surname': user_data.surname,
             'patronymic': user_data.patronymic,
             'birthdate': user_data.birthdate,
-            'role_id': role.id,
+            'role_id': role['id'],
             'is_changed_password': user_data.role == 'Ученик'
         }
         return await self.user_repo.add_one(new_user)
@@ -84,20 +84,20 @@ class AuthService:
             ['id', 'email', 'name', 'role_id', 'hashed_password', 'is_changed_password'],
             {'email': email}
         )
-        if not user or not verify_password(password, user.hashed_password):
+        if not user or not verify_password(password, user['hashed_password']):
             raise IncorrectDataException('Неверный email или пароль')
 
-        role = await self.role_repo.find_one(['name'], {'id': user.role_id})
-        payload = {'sub': str(user.id), 'role': role.name}
+        role = await self.role_repo.find_one(['name'], {'id': user['role_id']})
+        payload = {'sub': str(user['id']), 'role': role['name']}
 
         access_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_access))
         refresh_token = self.generate_jwt(payload, timedelta(seconds=settings.auth.lifetime_seconds_refresh))
         response = TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
-            role=role.name,
-            name=user.name,
-            is_changed_password=user.is_changed_password
+            role=role['name'],
+            name=user['name'],
+            is_changed_password=user['is_changed_password']
         )
 
         return response
@@ -125,8 +125,8 @@ class AuthService:
             access_token=access_token,
             refresh_token=refresh_token,
             role=payload['role'],
-            name=user.name,
-            is_changed_password=user.is_changed_password
+            name=user['name'],
+            is_changed_password=user['is_changed_password']
         )
 
     async def change_password(self, user_id: UUID, role_name: str, new_password: str):

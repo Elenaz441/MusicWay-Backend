@@ -1,7 +1,7 @@
 from .sqlalchemy_repo import SQLAlchemyRepository
 from models import Homework, Task, HomeworkTask, Variant, TopicBlock, User
-from typing import Sequence, Optional, Dict, Any
-from sqlalchemy import select, func, between, exists, RowMapping, Integer
+from typing import List, Optional, Dict, Any
+from sqlalchemy import select, func, between, exists, Integer
 from sqlalchemy.sql.functions import coalesce
 from uuid import UUID
 from datetime import datetime, timedelta
@@ -11,7 +11,7 @@ class HomeworkRepository(SQLAlchemyRepository):
     """Репозиторий для домашних заданий."""
     model = Homework
 
-    async def find_one_with_mark(self, homework_id: UUID, student_id: UUID) -> RowMapping:
+    async def find_one_with_mark(self, homework_id: UUID, student_id: UUID) -> Optional[Dict[str, Any]]:
         """Получает домашнее задание с баллами студента.
 
         :param homework_id: Идентификатор домашнего задания
@@ -25,6 +25,7 @@ class HomeworkRepository(SQLAlchemyRepository):
                 Homework.start_date, Homework.end_date, TopicBlock.name.label('block'),
                 coalesce(func.sum(HomeworkTask.mark), 0).label('student_mark'),
                 func.sum(Task.max_mark).label('max_mark'),
+                func.count(HomeworkTask.id).label('count')
             )
             .join(HomeworkTask, HomeworkTask.homework_id == Homework.id)
             .join(Task, HomeworkTask.task_id == Task.id)
@@ -34,9 +35,10 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().first()
+        row = res.mappings().first()
+        return dict(row) if row else None
 
-    async def find_all_active(self, class_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
+    async def find_all_active(self, class_id: UUID, student_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
         """Получает активные домашние задания для класса.
 
         :param class_id: Идентификатор класса
@@ -70,9 +72,9 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
-    async def find_all_completed(self, filter_by: Dict[str, Any]) -> Sequence[RowMapping]:
+    async def find_all_completed(self, filter_by: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Получает завершенные домашние задания по фильтру.
 
         :param filter_by: Словарь условий фильтрации
@@ -111,7 +113,7 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
     async def is_completed(self, homework_id: UUID, student_id: UUID) -> bool:
         """Проверяет, завершено ли домашнее задание.
@@ -135,7 +137,7 @@ class HomeworkRepository(SQLAlchemyRepository):
         res = await self.db.execute(stmt)
         return res.scalar()
 
-    async def get_marks(self, homework_id: UUID, student_id: Optional[UUID] = None) -> Sequence[RowMapping]:
+    async def get_marks(self, homework_id: UUID, student_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
         """Получает оценки по домашнему заданию.
 
         :param homework_id: Идентификатор задания
@@ -162,9 +164,9 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
-    async def get_homework_students(self, homework_id: UUID) -> Sequence[RowMapping]:
+    async def get_homework_students(self, homework_id: UUID) -> List[Dict[str, Any]]:
         """Получает список учеников с их баллами по заданию.
 
         :param homework_id: Идентификатор задания
@@ -186,9 +188,9 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
-    async def get_homework_tasks(self, homework_id: UUID) -> Sequence[RowMapping]:
+    async def get_homework_tasks(self, homework_id: UUID) -> List[Dict[str, Any]]:
         """Получает детальную информацию по заданиям.
 
         :param homework_id: Идентификатор задания
@@ -210,9 +212,9 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
-    async def get_statistic(self, class_id: UUID) -> Sequence[RowMapping]:
+    async def get_statistic(self, class_id: UUID) -> List[Dict[str, Any]]:
         """Получает статистику по завершенным заданиям за последние 3 месяца.
 
         :param class_id: Идентификатор класса
@@ -245,4 +247,4 @@ class HomeworkRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]

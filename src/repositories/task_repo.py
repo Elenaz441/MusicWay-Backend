@@ -1,7 +1,7 @@
 from .sqlalchemy_repo import SQLAlchemyRepository
 from models import Task, Variant, HomeworkTask
-from typing import List, Optional, Dict, Any, Sequence
-from sqlalchemy import select, RowMapping, func
+from typing import List, Optional, Dict, Any
+from sqlalchemy import select, func
 from uuid import UUID
 
 
@@ -9,7 +9,7 @@ class TaskRepository(SQLAlchemyRepository):
     """Репозиторий для упражнений."""
     model = Task
 
-    async def find_one(self, fields: List[str], filter_by: Optional[Dict[str, Any]] = None) -> RowMapping:
+    async def find_one(self, fields: List[str], filter_by: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """Получает одно задание с указанными полями.
 
         :param fields: Список полей для выборки
@@ -29,9 +29,10 @@ class TaskRepository(SQLAlchemyRepository):
             stmt = stmt.where(*filters)
 
         res = await self.db.execute(stmt)
-        return res.mappings().first()
+        row = res.mappings().first()
+        return dict(row) if row else None
 
-    async def find_all_by_material(self, material_id: UUID) -> Sequence[RowMapping]:
+    async def find_all_by_material(self, material_id: UUID) -> List[Dict[str, Any]]:
         """Возвращает количество упражнений, сгруппированных по варианту, для учебного материала.
 
         :param material_id: Идентификатор учебного материала
@@ -50,9 +51,9 @@ class TaskRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
-    async def find_all_by_homework(self, homework_id: UUID, student_id: UUID) -> Sequence[RowMapping]:
+    async def find_all_by_homework(self, homework_id: UUID, student_id: UUID) -> List[Dict[str, Any]]:
         """Получает задания домашней работы с группировкой по вариантам.
 
         :param homework_id: Идентификатор домашней работы
@@ -72,4 +73,4 @@ class TaskRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]

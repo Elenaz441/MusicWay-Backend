@@ -54,7 +54,7 @@ async def send_query(method: str, url: str, data: Optional[Dict[str, Any]] = Non
     async with httpx.AsyncClient() as client:
         response = await client.request(method=method, url=url, json=data, headers={'Content-Type': 'application/json'})
     if response.status_code != 200:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=response.json())
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(response.content))
     return response.json()
 
 

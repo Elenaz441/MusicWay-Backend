@@ -21,6 +21,7 @@ class ShortActiveHWTeacher(ShortActiveHomework):
 
 class ActiveHomework(ShortActiveHomework):
     block: str
+    count: int
     task_type_variants: List[VariantForActiveTask]
     related_materials: List[ShortMaterialResponse]
 
@@ -42,7 +43,6 @@ class LastHomework(ShortLastHomework):
 class TeacherHomework(ActiveHomework):
     is_completed: bool
     start_date: date
-    task_type_variants: List[VariantForActiveTask]
     results: List[UserResultTask]
 
 

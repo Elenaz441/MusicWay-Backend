@@ -1,7 +1,7 @@
 from uuid import UUID
-from sqlalchemy import insert, select, update, delete, RowMapping
+from sqlalchemy import insert, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Dict, Any, Sequence
+from typing import List, Optional, Dict, Any
 from sqlalchemy.sql import Select
 
 from .abstract_repo import AbstractRepository
@@ -73,7 +73,7 @@ class SQLAlchemyRepository(AbstractRepository):
             self,
             fields: List[str],
             filter_by: Optional[Dict[str, Any]] = None
-    ) -> Optional[RowMapping]:
+    ) -> Optional[Dict[str, Any]]:
         """Возвращает одну запись с указанными полями.
 
         :param fields: Список полей для выборки
@@ -83,7 +83,8 @@ class SQLAlchemyRepository(AbstractRepository):
         """
         stmt = self._build_select_query(fields, filter_by)
         result = await self.db.execute(stmt)
-        return result.mappings().first()
+        row = result.mappings().first()
+        return dict(row) if row else None
 
     async def find_all(
             self,
@@ -91,7 +92,7 @@ class SQLAlchemyRepository(AbstractRepository):
             filter_by: Optional[Dict[str, Any]] = None,
             order_by: Optional[str] = None,
             limit: Optional[int] = None
-    ) -> Sequence[RowMapping]:
+    ) -> List[Dict[str, Any]]:
         """Возвращает список записей с возможностью фильтрации и сортировки.
 
         :param fields: Список полей для выборки
@@ -103,7 +104,7 @@ class SQLAlchemyRepository(AbstractRepository):
         """
         stmt = self._build_select_query(fields, filter_by, order_by, limit)
         result = await self.db.execute(stmt)
-        return result.mappings().all()
+        return [dict(row) for row in result.mappings().all()]
 
     def _build_select_query(
             self,

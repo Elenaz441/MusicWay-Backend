@@ -1,9 +1,8 @@
-from sqlalchemy import func, select, RowMapping
+from sqlalchemy import func, select
 from models import StudyMaterial, Task, HomeworkTask
 from .sqlalchemy_repo import SQLAlchemyRepository
-from typing import List, Optional, Dict, Any, Sequence
+from typing import List, Optional, Dict, Any
 from uuid import UUID
-import sqlalchemy as alchemy
 
 
 class MaterialRepository(SQLAlchemyRepository):
@@ -17,7 +16,7 @@ class MaterialRepository(SQLAlchemyRepository):
             filter_by: Optional[Dict[str, Any]] = None,
             order_by: Optional[str] = None,
             limit: Optional[int] = None
-    ) -> Sequence[RowMapping]:
+    ) -> List[Dict[str, Any]]:
         """Получает список учебных материалов с возможностью фильтрации и поиска.
 
         :param fields: Список полей для выборки
@@ -47,9 +46,9 @@ class MaterialRepository(SQLAlchemyRepository):
             stmt = stmt.limit(limit)
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
 
-    async def find_all_by_homework(self, homework_id: UUID) -> Sequence[RowMapping]:
+    async def find_all_by_homework(self, homework_id: UUID) -> List[Dict[str, Any]]:
         """Получает учебные материалы, связанные с конкретным домашним заданием.
 
         :param homework_id: Идентификатор домашнего задания
@@ -70,4 +69,4 @@ class MaterialRepository(SQLAlchemyRepository):
         )
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]

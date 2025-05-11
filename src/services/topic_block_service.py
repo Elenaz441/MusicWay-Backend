@@ -52,17 +52,17 @@ class TopicBlockService:
         if not class_id:
             raise NotFoundException('класс', 'user_id')
         homeworks = await self.homework_repo.find_all_completed(
-            {'class_id': class_id.class_id, 'student_id': user_id, 'block_id': block_id}
+            {'class_id': class_id['class_id'], 'student_id': user_id, 'block_id': block_id}
         )
         variants = await self.variant_repo.find_all_by_block(block_id, ['name'])
         result = {}
         for hw in homeworks:
-            hw_tasks = await self.homework_repo.get_marks(hw.id, user_id)
+            hw_tasks = await self.homework_repo.get_marks(hw['id'], user_id)
             result = calculate_statistic(hw_tasks, result)
 
         for variant in variants:
-            if variant.name not in result:
-                result[variant.name] = {'name': variant.name, 'student_mark': 0, 'max_mark': 1}
+            if variant['name'] not in result:
+                result[variant['name']] = {'name': variant['name'], 'student_mark': 0, 'max_mark': 1}
 
         return [
             VariantStatistic(

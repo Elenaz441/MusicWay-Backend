@@ -55,9 +55,9 @@ class HomeworkService:
         if not class_id:
             raise NotFoundException('класс', 'user_id')
         if active:
-            tasks = await self.homework_repo.find_all_active(class_id.class_id, user_id)
+            tasks = await self.homework_repo.find_all_active(class_id['class_id'], user_id)
             return [ShortActiveHomework.model_validate(task) for task in tasks]
-        tasks = await self.homework_repo.find_all_completed({'class_id': class_id.class_id, 'student_id': user_id})
+        tasks = await self.homework_repo.find_all_completed({'class_id': class_id['class_id'], 'student_id': user_id})
         return [ShortLastHomework.model_validate(task) for task in tasks]
 
     async def get_active_homework(self, homework_id: UUID, user_id: UUID, role: str) -> ActiveHomework:
@@ -87,7 +87,7 @@ class HomeworkService:
         tasks = await self.task_repo.find_all_by_homework(homework_id, user_id)
         related_materials = await self.material_repo.find_all_by_homework(homework_id)
 
-        result = dict(homework_info)
+        result = homework_info
         result['task_type_variants'] = tasks
         result['related_materials'] = related_materials
         return ActiveHomework.model_validate(result)
@@ -130,7 +130,7 @@ class HomeworkService:
             grouped_tasks[key]['student_mark'] += task['student_mark']
             grouped_tasks[key]['max_mark'] += task['max_mark']
 
-        result = dict(homework_info)
+        result = homework_info
         result['task_type_variants'] = list(grouped_tasks.values())
 
         return LastHomework.model_validate(result)
@@ -150,13 +150,13 @@ class HomeworkService:
             raise NoRightsException()
 
         students = await self.homework_repo.get_homework_students(homework_id)
-        homework_info = await self.homework_repo.find_one_with_mark(homework_id, students[0].id)
+        homework_info = await self.homework_repo.find_one_with_mark(homework_id, students[0]['id'])
         if not homework_info:
             raise NotFoundException('homework', 'homework_id')
 
-        is_completed = homework_info.end_date <= datetime.date(datetime.now(timezone.utc))
+        is_completed = homework_info['end_date'] < datetime.date(datetime.now(timezone.utc))
 
-        task_type_variants = await self.task_repo.find_all_by_homework(homework_id, students[0].id)
+        task_type_variants = await self.task_repo.find_all_by_homework(homework_id, students[0]['id'])
         related_materials = await self.material_repo.find_all_by_homework(homework_id)
         tasks = await self.homework_repo.get_homework_tasks(homework_id)
 
@@ -184,7 +184,8 @@ class HomeworkService:
         for student in student_dict.values():
             student['tasks'] = list(student['tasks'].values())
 
-        result = dict(homework_info)
+        result = homework_info
+        print(result)
         result['is_completed'] = is_completed
         result['task_type_variants'] = task_type_variants
         result['related_materials'] = related_materials
@@ -216,10 +217,10 @@ class HomeworkService:
 
         for variant in homework.variants:
             task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': variant.variant_id})
-            task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+            task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id['task_type_id']})
             tasks = await send_query(
                 'POST',
-                f'{task_type_url.service_url}/tasks',
+                f'{task_type_url["service_url"]}/tasks',
                 variant.settings
             )
             for task in tasks:
@@ -234,7 +235,7 @@ class HomeworkService:
                     'answer': task['answer'],
                     'max_mark': task['max_mark'],
                     'variant_id': variant.variant_id,
-                    'material_id': material_id[0].id,
+                    'material_id': material_id[0]['id'],
                     'number': number
                 }
                 task_id = await self.task_repo.add_one(new_task)
@@ -246,7 +247,7 @@ class HomeworkService:
         for student_id in student_ids:
             for task_id in task_ids:
                 homework_task = {
-                    'student_id': student_id.student_id,
+                    'student_id': student_id['student_id'],
                     'homework_id': homework_id,
                     'task_id': task_id,
                 }
@@ -282,7 +283,7 @@ class HomeworkService:
             raise NoRightsException()
         task_ids = await self.hw_task_repo.find_all(['task_id'], {'homework_id': homework_id})
         await self.homework_repo.delete_one(homework_id)
-        unique_task_ids = {task_id.task_id for task_id in task_ids}
+        unique_task_ids = {task_id['task_id'] for task_id in task_ids}
         for task_id in unique_task_ids:
             await self.task_repo.delete_one(task_id)
 
@@ -312,19 +313,19 @@ class HomeworkService:
             raise NotFoundException('homework', 'homework_id')
         for task_answer in tasks:
             task = await self.task_repo.find_one(['id', 'variant_id', 'answer'], {'id': task_answer.task_id})
-            task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
-            task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+            task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task['variant_id']})
+            task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id['task_type_id']})
             response = await send_query(
                 'POST',
-                f'{task_type_url.service_url}/tasks/get-mark',
-                {'check_data': task_answer.check_data, 'answer': task.answer}
+                f'{task_type_url["service_url"]}/tasks/get-mark',
+                {'check_data': task_answer.check_data, 'answer': task['answer']}
             )
             mark = response['mark']
             hw_task = await self.hw_task_repo.find_one(
                 ['id'],
-                {'homework_id': homework_id, 'student_id': user_id, 'task_id': task.id}
+                {'homework_id': homework_id, 'student_id': user_id, 'task_id': task['id']}
             )
-            await self.hw_task_repo.edit_one(hw_task.id, {'mark': mark})
+            await self.hw_task_repo.edit_one(hw_task['id'], {'mark': mark})
         return await self.get_completed_homework(homework_id, user_id, role)
 
     async def get_statistic(self, homework_id: UUID, role: str) -> List[VariantStatistic]:

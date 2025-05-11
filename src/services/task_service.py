@@ -32,12 +32,12 @@ class TaskService:
         variant = await self.variant_repo.find_one(
             ['name', 'student_description', 'teacher_description'],
             {'id': task_info['variant_id']})
-        description = variant.student_description if role == 'Ученик' else variant.teacher_description
+        description = variant['student_description'] if role == 'Ученик' else variant['teacher_description']
         return TaskResponse(
-            id=task_info.id,
-            condition=task_info.condition,
-            content=task_info.content,
-            task_type_variant=variant.name,
+            id=task_info['id'],
+            condition=task_info['condition'],
+            content=task_info['content'],
+            task_type_variant=variant['name'],
             description=description
         )
 
@@ -73,7 +73,7 @@ class TaskService:
         task_ids = await self.hw_task_repo.find_all(['task_id'], filter_by={'homework_id': homework_id})
         if not task_ids:
             raise NotFoundException('упражнение', 'homework_id')
-        task_ids = [task_id.task_id for task_id in task_ids]
+        task_ids = [task_id['task_id'] for task_id in task_ids]
         result = await self.task_repo.find_one(
             ['id', 'variant_id', 'condition', 'content'],
             {'task_ids': task_ids, 'number': task_number})
@@ -90,10 +90,10 @@ class TaskService:
         :return: Идентификатор созданного упражнения.
         """
         variant = await self.variant_repo.find_one(['task_type_id', 'name'], {'id': data.variant_id})
-        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': variant.task_type_id})
+        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': variant['task_type_id']})
         response = await send_query(
             'POST',
-            f'{task_type_url.service_url}/tasks',
+            f'{task_type_url["service_url"]}/tasks',
             data.settings
         )
         task = response[0]
@@ -109,6 +109,7 @@ class TaskService:
             ['id', 'variant_id', 'condition', 'content'],
             {'id': task_id}
         )
+        print(result)
         return await self._take_task(result, role)
 
     async def check_task(self, task_id: UUID, data: TaskSubmit) -> TaskAnswer:
@@ -125,13 +126,13 @@ class TaskService:
         )
         if not task:
             raise NotFoundException('task', 'id')
-        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task.variant_id})
-        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id.task_type_id})
+        task_type_id = await self.variant_repo.find_one(['task_type_id'], {'id': task['variant_id']})
+        task_type_url = await self.task_type_repo.find_one(['service_url'], {'id': task_type_id['task_type_id']})
         response = await send_query(
             'POST',
-            f'{task_type_url.service_url}/tasks/check',
-            {'check_data': data.check_data, 'answer': task.answer}
+            f'{task_type_url["service_url"]}/tasks/check',
+            {'check_data': data.check_data, 'answer': task['answer']}
         )
-        if not task.is_study_task and data.delete_it:
+        if not task['is_study_task'] and data.delete_it:
             await self.task_repo.delete_one(task_id)
         return TaskAnswer(is_right=response['is_right'], answer=response['answer'])
