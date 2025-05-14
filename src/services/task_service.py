@@ -24,7 +24,7 @@ class TaskService:
         melodies = settings.melodies
         if settings.melodies is None:
             melody = await self.melody_repo.find_random_melody(['id'])
-            melodies = [melody.id]
+            melodies = [melody['id']]
         tasks = []
         for melody_id in melodies:
             task = {}
@@ -34,18 +34,18 @@ class TaskService:
             )
             if not melody:
                 raise NotFoundException('мелодия', 'id')
-            task['condition'] = f'Построй интервал {melody.intervals[0]} от ноты {melody.notes[0]}'
+            task['condition'] = f'Построй интервал {melody["intervals"][0]} от ноты {melody["notes"][0]}'
             task['content'] = {
-                'initial_note': convert_russian_note_to_international(melody.notes[0]),
-                'intervals': [f'Построй интервал {interval}' for interval in melody.intervals[1:]]
+                'initial_note': convert_russian_note_to_international(melody['notes'][0]),
+                'intervals': [f'Построй интервал {interval}' for interval in melody['intervals'][1:]]
             }
             task['answer'] = {
-                'audio_url': melody.audio_url,
-                'image_url': melody.image_url,
+                'audio_url': melody['audio_url'],
+                'image_url': melody['image_url'],
                 'melody': melody_id,
             }
             task['max_mark'] = 10
-            task['query'] = melody.query
+            task['query'] = melody['query']
             tasks.append(TaskResponse.model_validate(task))
         random.shuffle(tasks)
         return tasks
@@ -62,13 +62,13 @@ class TaskService:
         if not melody:
             raise NotFoundException('мелодия', 'id')
         for i in range(len(task.check_data.notes)):
-            right_note = convert_russian_note_to_international(melody.notes[i])
+            right_note = convert_russian_note_to_international(melody['notes'][i])
             if right_note != task.check_data.notes[i]:
                 is_right = False
                 break
         return CheckTaskResponse(
             is_right=is_right,
-            answer={'audio_url': melody.audio_url, 'image_url': melody.image_url}
+            answer={'audio_url': melody['audio_url'], 'image_url': melody['image_url']}
         )
 
     async def get_mark(self, task: CheckTask) -> GetMarkTaskResponse:
@@ -89,7 +89,7 @@ class TaskService:
         ]
         mistakes = -1
         for i in range(len(intervals)):
-            if intervals[i] != melody.intervals[i]:
+            if intervals[i] != melody['intervals'][i]:
                 mistakes += 1
         if mistakes == -1:
             mistakes = 0

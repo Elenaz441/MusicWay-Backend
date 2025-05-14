@@ -15,10 +15,10 @@ class SettingService:
 
         :return: Настройки.
         """
-        melodies = await self.repo.find_all(['id', 'name'])
-        description = 'Выберите мелодии, которые хотите задать:'
-        if role != 'Преподаватель':
-            description = melodies = None
+        description = melodies = None
+        if role == 'Преподаватель':
+            melodies = await self.repo.find_all(['id', 'name'])
+            description = 'Выберите мелодии, которые хотите задать:'
         return MelodySettingResponse(
             description=description,
             melodies=melodies,

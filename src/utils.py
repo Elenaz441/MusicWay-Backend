@@ -121,7 +121,9 @@ def calculate_interval(note1: str, note2: str) -> str:
         9: 'б.6', 10: 'м.7', 11: 'б.7', 12: 'ч.8'
     }
 
-    semitone_mod = semitone_diff_abs % 12
+    semitone_mod = semitone_diff_abs
+    if semitone_mod > 12:
+        semitone_mod %= 12
     interval_name = interval_table.get(semitone_mod, 'неизвестный интервал')
 
     if semitone_diff_abs == 0:
