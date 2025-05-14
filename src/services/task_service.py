@@ -25,7 +25,7 @@ class TaskService:
         intervals = settings.intervals
         if 'Все' in intervals:
             intervals = await self.setting_repo.find_one(['values'], name='Интервалы')
-            intervals = dict(intervals)['values'][1:]
+            intervals = intervals['values'][1:]
         images = await self.image_repo.find_random_image(['name', 'url'], settings.count)
         for i in range(settings.count):
             task = {}
@@ -40,12 +40,12 @@ class TaskService:
             answer = []
             for j, interval in enumerate(selected):
                 audio = await self.audio_repo.find_random_audio(['interval', 'url'], interval=interval)
-                audios.append({'audio_url': audio.url, 'number': j})
-                answer.append({'audio_url': audio.url, 'interval': interval})
+                audios.append({'audio_url': audio['url'], 'number': j})
+                answer.append({'audio_url': audio['url'], 'interval': interval})
             random.shuffle(selected)
             task['content'] = {
-                'image_url': images[i % len(images)].url,
-                'image_name': images[i % len(images)].name,
+                'image_url': images[i % len(images)]['url'],
+                'image_name': images[i % len(images)]['name'],
                 'audio_urls': audios,
                 'intervals': selected
             }

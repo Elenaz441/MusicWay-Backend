@@ -22,9 +22,8 @@ class SettingService:
         description = 'Выбери интервалы, которые ты хочешь тренировать. Если ничего не выбирать, то будут все сразу.'
         if role == 'Преподаватель':
             description = 'Можете задать определённые простые интервалы, по умолчанию выбраны все:'
-        res = dict(settings)
         return IntervalsSettingResponse(
             description=description,
-            intervals=res['values'],
+            intervals=settings['values'],
             is_need_count=role == 'Преподаватель'
         )

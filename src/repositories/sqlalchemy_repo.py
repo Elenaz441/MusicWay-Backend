@@ -1,6 +1,6 @@
-from sqlalchemy import select, RowMapping
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Dict, Any, Sequence
+from typing import List, Optional, Dict, Any
 
 from .abstract_repo import AbstractRepository
 
@@ -17,7 +17,7 @@ class SQLAlchemyRepository(AbstractRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def find_one(self, fields: List[str], **filter_by) -> RowMapping:
+    async def find_one(self, fields: List[str], **filter_by) -> Optional[Dict[str, Any]]:
         """Получает одну запись, возвращая только указанные поля.
 
         :param fields: Список полей для выборки
@@ -28,7 +28,8 @@ class SQLAlchemyRepository(AbstractRepository):
         columns = [getattr(self.model, field) for field in fields]
         stmt = select(*columns).filter_by(**filter_by)
         res = await self.db.execute(stmt)
-        return res.mappings().first()
+        row = res.mappings().first()
+        return dict(row) if row else None
 
     async def find_all(
             self,
@@ -36,7 +37,7 @@ class SQLAlchemyRepository(AbstractRepository):
             filter_by: Optional[Dict[str, Any]] = None,
             order_by: Optional[str] = None,
             limit: Optional[int] = None
-    ) -> Sequence[RowMapping]:
+    ) -> List[Dict[str, Any]]:
         """Получает все записи с поддержкой фильтрации, сортировки и ограничения количества.
 
         :param fields: Список полей для выборки
@@ -61,4 +62,4 @@ class SQLAlchemyRepository(AbstractRepository):
             stmt = stmt.limit(limit)
 
         res = await self.db.execute(stmt)
-        return res.mappings().all()
+        return [dict(row) for row in res.mappings().all()]
