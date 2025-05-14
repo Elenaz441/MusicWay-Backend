@@ -31,11 +31,11 @@ class TaskService:
             task = {}
             interval = intervals[i % len(intervals)]
             audio = await self.audio_repo.find_random_audio(['interval', 'notes', 'url'], interval=interval)
-            task['condition'] = f'Пропой восходящий интервал {audio.interval} от ноты {audio.notes[0]}'
+            task['condition'] = f'Пропой восходящий интервал {audio['interval']} от ноты {audio['notes'][0]}'
             task['answer'] = {
-                'audio_url': audio.url,
-                'note_1': audio.notes[0],
-                'note_2': audio.notes[1],
+                'audio_url': audio['url'],
+                'note_1': audio['notes'][0],
+                'note_2': audio['notes'][1],
             }
             task['max_mark'] = 1
             task['query'] = interval
@@ -70,4 +70,3 @@ class TaskService:
         """
         check = await self.check_task(task)
         return GetMarkTaskResponse(mark=int(check.is_right))
-
