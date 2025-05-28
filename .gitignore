@@ -34,3 +34,4 @@ archive.zip
 files
 
 *.log
+/nginx/certs/

@@ -47,5 +47,19 @@ services:
     networks:
       - fastapiappnetwork
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/certs:/etc/nginx/certs
+    depends_on:
+      - app
+    networks:
+      - fastapiappnetwork
+
 networks:
   fastapiappnetwork:
